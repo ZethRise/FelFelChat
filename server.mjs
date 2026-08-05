@@ -144,6 +144,12 @@ app.prepare().then(() => {
       }
     }
 
+    // Cache-bust _next/static so CSS/JS changes propagate to browsers
+    if (parsedUrl.pathname && parsedUrl.pathname.startsWith("/_next/static/")) {
+      res.setHeader("Cache-Control", "no-store, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+    }
+
     handle(req, res, parsedUrl);
   });
 
@@ -285,7 +291,7 @@ app.prepare().then(() => {
         });
         if (!message || message.roomId !== roomId) return;
         const readByUsers = (message.readBy || "")
-          .split(/[,\s;]+/)
+          .split(",")
           .map((item) => item.trim())
           .filter(Boolean);
         const readBySet = new Set(readByUsers);
@@ -305,6 +311,25 @@ app.prepare().then(() => {
       } catch (error) {
         log("warn", "socket.message.read.error", {
           messageId,
+          roomId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+
+    // Mark entire room as read (updates lastReadAt)
+    socket.on("room:read", async ({ roomId }) => {
+      if (!roomId || typeof roomId !== "string") return;
+      if (!joinedRooms.has(roomId)) return;
+      try {
+        await prisma.roomMember.update({
+          where: { userId_roomId: { userId, roomId } },
+          data: { lastReadAt: new Date() },
+        });
+        // Broadcast unread=0 to this user's other tabs
+        socket.emit("room:read:ack", { roomId });
+      } catch (error) {
+        log("warn", "socket.room.read.error", {
           roomId,
           error: error instanceof Error ? error.message : String(error),
         });

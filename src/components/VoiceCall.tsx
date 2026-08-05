@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import AppIcon from './AppIcon';
-
 interface VoiceCallProps {
   status: 'ringing' | 'incoming' | 'active';
   callerName?: string;
@@ -67,7 +66,7 @@ export default function VoiceCall({
           width: '100%',
           height: '100%',
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #e84545, #ff8a5c)',
+          background: 'var(--accent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -103,32 +102,16 @@ export default function VoiceCall({
         {status === 'incoming' && (
           <>
             <button
+              className="call-btn call-btn-danger"
               onClick={onReject}
-              style={{
-                width: 64, height: 64, borderRadius: '50%',
-                background: '#f44336', border: 'none',
-                color: 'white', fontSize: 28, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'transform 0.2s',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-              onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               title={t('call.reject')}
             >
               <AppIcon name="close" size={24} />
             </button>
             <button
+              className="call-btn call-btn-success"
               onClick={onAccept}
-              style={{
-                width: 72, height: 72, borderRadius: '50%',
-                background: '#4caf50', border: 'none',
-                color: 'white', fontSize: 32, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'transform 0.2s',
-                animation: 'pulse 1.5s ease-in-out infinite',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-              onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              style={{ width: 72, height: 72 }}
               title={t('call.accept')}
             >
               <AppIcon name="phone" size={26} />
@@ -140,14 +123,8 @@ export default function VoiceCall({
           <>
             {status === 'active' && (
               <button
+                className={`call-btn ${isMuted ? 'call-btn-accent' : 'call-btn-neutral'}`}
                 onClick={onToggleMute}
-                style={{
-                  width: 56, height: 56, borderRadius: '50%',
-                  background: isMuted ? 'var(--accent)' : 'var(--bg-tertiary)',
-                  border: 'none', color: 'white', fontSize: 22,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.2s',
-                }}
                 disabled={!onToggleMute}
                 title={isMuted ? t('call.unmute') : t('call.mute')}
               >
@@ -155,16 +132,8 @@ export default function VoiceCall({
               </button>
             )}
             <button
+              className="call-btn call-btn-danger"
               onClick={onEnd}
-              style={{
-                width: 64, height: 64, borderRadius: '50%',
-                background: '#f44336', border: 'none',
-                color: 'white', fontSize: 28, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'transform 0.2s',
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-              onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
               title={t('call.end')}
             >
               <AppIcon name="close" size={24} />

@@ -17,6 +17,7 @@ interface Room {
   members: { user: { id: string; username: string; displayName: string | null; lastSeen: string } }[];
   messages: { text: string | null; user: { username: string }; createdAt: string }[];
   _count: { messages: number; members: number };
+  unreadCount?: number;
 }
 
 interface CallState {
@@ -166,6 +167,12 @@ export default function ChatPage() {
   useEffect(() => {
     roomsRef.current = rooms;
   }, [rooms]);
+
+  // Browser tab title badge
+  useEffect(() => {
+    const total = Object.values(unreadByRoom).reduce((sum, n) => sum + n, 0);
+    document.title = total > 0 ? `(${total}) FelFel Chat` : 'FelFel Chat';
+  }, [unreadByRoom]);
 
   useEffect(() => {
     callStateRef.current = callState;
@@ -391,7 +398,17 @@ export default function ChatPage() {
     try {
       const res = await fetch('/api/rooms');
       const data = await res.json();
-      if (data.rooms) setRooms(data.rooms);
+      if (data.rooms) {
+        setRooms(data.rooms);
+        // Hydrate unread counts from server
+        const counts: Record<string, number> = {};
+        for (const room of data.rooms) {
+          if (room.unreadCount && room.unreadCount > 0) {
+            counts[room.id] = room.unreadCount;
+          }
+        }
+        setUnreadByRoom(counts);
+      }
     } catch (err) {
       console.error('Failed to fetch rooms:', err);
     } finally {
@@ -702,6 +719,10 @@ export default function ChatPage() {
       delete next[roomId];
       return next;
     });
+    // Mark room as read on server
+    fetch(`/api/rooms/${roomId}/read`, { method: 'POST' }).catch(() => {});
+    const socket = getSocket();
+    socket.emit('room:read', { roomId });
     closeSidebarOnMobile();
   };
 
@@ -741,6 +762,15 @@ export default function ChatPage() {
           onlineUsers={onlineUsers}
           onSelectRoom={selectRoom}
           onRoomsChange={fetchRooms}
+          onCloseRoom={async (roomId: string) => {
+            try {
+              await fetch(`/api/rooms/${roomId}/members`, { method: 'DELETE' });
+              if (activeRoomId === roomId) setActiveRoomId(null);
+              void fetchRooms();
+            } catch (err) {
+              console.error('Failed to close room:', err);
+            }
+          }}
           onLogout={logout}
           t={t}
           locale={locale}
@@ -757,6 +787,13 @@ export default function ChatPage() {
             user={user}
             onlineUsers={onlineUsers}
             onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            onCloseRoom={() => {
+              if (activeRoomId) {
+                fetch(`/api/rooms/${activeRoomId}/members`, { method: 'DELETE' }).catch(() => {});
+                setActiveRoomId(null);
+                void fetchRooms();
+              }
+            }}
             onStartCall={startCall}
             t={t}
             dir={dir}
@@ -764,7 +801,7 @@ export default function ChatPage() {
           />
         ) : (
           <div style={{ flex: 1, display: 'grid', placeItems: 'center', color: 'var(--fg-muted)' }}>
-            <div className="card glass" style={{ width: 'min(440px, calc(100vw - 48px))', minHeight: 420, textAlign: 'center', display: 'grid', gap: 14, justifyItems: 'center', alignContent: 'center' }}>
+            <div className="card" style={{ width: 'min(440px, calc(100vw - 48px))', minHeight: 420, textAlign: 'center', display: 'grid', gap: 14, justifyItems: 'center', alignContent: 'center' }}>
             <Image
               src={brandLogoSrc}
               alt={t('app.name')}

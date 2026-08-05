@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import localFont from "next/font/local";
 import { Sora, Vazirmatn } from "next/font/google";
 
 const sora = Sora({
@@ -18,6 +19,15 @@ const vazirmatn = Vazirmatn({
   display: "swap",
 });
 
+const estedad = localFont({
+  src: [
+    { path: "../fonts/Estedad-Regular.ttf", weight: "400", style: "normal" },
+    { path: "../fonts/Estedad-Bold.ttf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-estedad",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "FelFel Chat",
   description: "Secure and modern real-time messaging",
@@ -31,8 +41,8 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl" suppressHydrationWarning>
       <body
-        className={`${vazirmatn.variable} ${sora.variable}`}
-        style={{ fontFamily: "var(--font-vazirmatn), var(--font-sora), sans-serif" }}
+        className={`${estedad.variable} ${vazirmatn.variable} ${sora.variable}`}
+        style={{ fontFamily: "var(--font-estedad), var(--font-sora), sans-serif" }}
       >
         <I18nProvider>
           <AuthProvider>{children}</AuthProvider>

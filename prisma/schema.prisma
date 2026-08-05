@@ -87,12 +87,13 @@ model Gif {
 }
 
 model RoomMember {
-  id       String   @id @default(uuid()) @map("_id")
-  userId   String
-  roomId   String
-  joinedAt DateTime @default(now())
-  user     User     @relation(fields: [userId], references: [id])
-  room     Room     @relation(fields: [roomId], references: [id])
+  id         String    @id @default(uuid()) @map("_id")
+  userId     String
+  roomId     String
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+  user       User      @relation(fields: [userId], references: [id])
+  room       Room      @relation(fields: [roomId], references: [id])
 
   @@unique([userId, roomId])
 }
@@ -138,4 +139,28 @@ model BackupLog {
   size      Int
   createdAt DateTime @default(now())
   note      String?
+}
+
+model UserSettings {
+  id                String  @id @default(uuid()) @map("_id")
+  userId            String  @unique
+  notifications     Boolean @default(true)
+  sound             Boolean @default(true)
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart   String?
+  quietHoursEnd     String?
+  theme             String  @default("dark")
+  accentColor       String  @default("#3b82f6")
+  fontSize          String  @default("medium")
+  bubbleStyle       String  @default("rounded")
+  readReceipts      Boolean @default(true)
+  lastSeen          String  @default("everyone")
+  screenLock        String  @default("off")
+  autoDownload      Boolean @default(true)
+  autoDownloadWiFi  Boolean @default(true)
+  imageQuality      String  @default("medium")
+  enterToSend       Boolean @default(false)
+  chatBackup        Boolean @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }

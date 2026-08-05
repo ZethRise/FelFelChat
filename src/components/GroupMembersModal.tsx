@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import Image from 'next/image';
 import AppIcon from './AppIcon';
+import { overlayFade, scaleIn, staggerContainer, staggerItem } from '@/lib/animations';
 
 interface Member {
   id: string;
@@ -62,43 +64,36 @@ export default function GroupMembersModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: 20,
-      }}
+    <motion.div
+      className="modal-overlay"
       onClick={onClose}
+      variants={overlayFade}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
     >
-      <div
+      <motion.div
+        className="modal"
         style={{
-          background: 'var(--bg-secondary)',
-          borderRadius: 16,
-          width: '100%',
           maxWidth: 500,
           maxHeight: '80vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           direction: dir,
+          padding: 0,
         }}
         onClick={(e) => e.stopPropagation()}
+        variants={scaleIn}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
       >
         {/* Header */}
         <div
           style={{
             padding: '20px 24px',
-            borderBottom: '1px solid var(--border)',
+            borderBottom: '1px solid var(--stroke-soft)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -113,9 +108,8 @@ export default function GroupMembersModal({
             </p>
           </div>
           <button
-            className="btn btn-ghost btn-icon"
+            className="btn btn-ghost btn-icon btn-sm"
             onClick={onClose}
-            style={{ fontSize: 20 }}
           >
             <AppIcon name="close" size={20} />
           </button>
@@ -132,84 +126,85 @@ export default function GroupMembersModal({
               {t('room.members')}: 0
             </p>
           ) : (
-            members.map((member) => (
-              <div
-                key={member.id}
-                style={{
-                  padding: '12px 24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  cursor: onMemberClick ? 'pointer' : 'default',
-                  transition: 'background 0.15s',
-                }}
-                onClick={() => onMemberClick?.(member.userId)}
-                onMouseOver={(e) => onMemberClick && (e.currentTarget.style.background = 'var(--bg-hover)')}
-                onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
-              >
-                {/* Avatar */}
-                {member.user.avatarUrl ? (
-                  <Image
-                    src={member.user.avatarUrl}
-                    alt={member.user.displayName || member.user.username}
-                    width={48}
-                    height={48}
-                    unoptimized
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      flex: 'none',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '50%',
-                      background: 'var(--accent)',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 20,
-                      fontWeight: 600,
-                      flex: 'none',
-                    }}
-                  >
-                    {(member.user.displayName || member.user.username).charAt(0).toUpperCase()}
-                  </div>
-                )}
-
-                {/* User Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>
-                    {member.user.displayName || member.user.username}
-                  </div>
-                  {member.user.bio && (
+            <motion.div variants={staggerContainer} initial="hidden" animate="visible">
+              {members.map((member) => (
+                <motion.div
+                  key={member.id}
+                  variants={staggerItem}
+                  style={{
+                    padding: '12px 24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    cursor: onMemberClick ? 'pointer' : 'default',
+                  }}
+                  onClick={() => onMemberClick?.(member.userId)}
+                  whileHover={{ backgroundColor: 'var(--bg-hover)' }}
+                >
+                  {/* Avatar */}
+                  {member.user.avatarUrl ? (
+                    <Image
+                      src={member.user.avatarUrl}
+                      alt={member.user.displayName || member.user.username}
+                      width={48}
+                      height={48}
+                      unoptimized
+                      style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        flex: 'none',
+                      }}
+                    />
+                  ) : (
                     <div
                       style={{
-                        fontSize: 14,
-                        color: 'var(--fg-muted)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        background: 'var(--accent)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 20,
+                        fontWeight: 600,
+                        flex: 'none',
                       }}
                     >
-                      {member.user.bio}
+                      {(member.user.displayName || member.user.username).charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 2 }}>
-                    @{member.user.username}
+
+                  {/* User Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 2 }}>
+                      {member.user.displayName || member.user.username}
+                    </div>
+                    {member.user.bio && (
+                      <div
+                        style={{
+                          fontSize: 14,
+                          color: 'var(--fg-muted)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {member.user.bio}
+                      </div>
+                    )}
+                    <div style={{ fontSize: 12, color: 'var(--fg-muted)', marginTop: 2 }}>
+                      @{member.user.username}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))
+                </motion.div>
+              ))}
+            </motion.div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

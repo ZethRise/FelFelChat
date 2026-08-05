@@ -265,7 +265,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div style={{
         padding: '16px 24px',
-        borderBottom: '1px solid var(--bg-tertiary)',
+        borderBottom: '1px solid var(--stroke-soft)',
         background: 'var(--bg-secondary)',
         display: 'flex',
         alignItems: 'center',
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
         <nav style={{
           width: 220,
           background: 'var(--bg-secondary)',
-          borderInlineEnd: '1px solid var(--bg-tertiary)',
+          borderInlineEnd: '1px solid var(--stroke-soft)',
           padding: '16px 0',
         }}>
           {navItems.map((item) => (
@@ -307,7 +307,7 @@ export default function AdminDashboard() {
                 color: 'var(--fg)',
                 textDecoration: 'none',
                 fontSize: 14,
-                transition: 'background 0.15s',
+                transition: 'background 0.15s ease',
               }}
               onMouseOver={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
               onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -423,7 +423,7 @@ export default function AdminDashboard() {
                         style={{
                           position: 'relative',
                           background: 'var(--bg-tertiary)',
-                          borderRadius: 8,
+                          borderRadius: 'var(--radius-sm)',
                           padding: 8,
                           aspectRatio: '1',
                           display: 'flex',
@@ -509,7 +509,7 @@ export default function AdminDashboard() {
                         style={{
                           position: 'relative',
                           background: 'var(--bg-tertiary)',
-                          borderRadius: 8,
+                          borderRadius: 'var(--radius-sm)',
                           padding: 8,
                           aspectRatio: '1',
                           display: 'flex',

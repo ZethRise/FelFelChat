@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-
 interface EmojiStickerPickerProps {
   onEmojiSelect: (emoji: string) => void;
  onStickerSelect: (stickerId: string, stickerUrl: string) => void;
@@ -161,6 +160,7 @@ export default function EmojiStickerPicker({
 
   return (
     <div
+      className="picker-panel"
       style={{
         position: 'absolute',
         bottom: '100%',
@@ -169,35 +169,18 @@ export default function EmojiStickerPicker({
         width: 360,
         maxWidth: 'calc(100vw - 40px)',
         height: 400,
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border)',
-        borderRadius: 12,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 100,
       }}
     >
       {/* Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--border)',
-          padding: '8px 12px',
-          gap: 8,
-        }}
-      >
+      <div className="picker-tabs">
         {(['emoji', 'stickers', 'gifs'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className="btn btn-sm"
-            style={{
-              flex: 1,
-              background: activeTab === tab ? 'var(--bg-hover)' : 'transparent',
-              border: 'none',
-              fontSize: 13,
-            }}
+            className={`picker-tab${activeTab === tab ? ' active' : ''}`}
           >
             {t(`picker.${tab}`)}
           </button>
@@ -224,11 +207,11 @@ export default function EmojiStickerPicker({
                 style={{
                   background: 'transparent',
                   border: 'none',
+                  borderRadius: 'var(--radius-sm)',
                   fontSize: 24,
                   cursor: 'pointer',
                   padding: 8,
-                  borderRadius: 4,
-                  transition: 'background 0.15s',
+                  transition: 'background 0.15s ease',
                 }}
                 onMouseOver={(e) => (e.currentTarget.style.background = 'var(--bg-hover)')}
                 onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -260,24 +243,11 @@ export default function EmojiStickerPicker({
                 {stickers.map((sticker) => (
                   <button
                     key={sticker.id}
+                    className="picker-item"
                     onClick={() => {
                       onStickerSelect(sticker.id, sticker.fileUrl);
                       onClose();
                     }}
-                    style={{
-                      background: 'var(--bg-tertiary)',
-                      border: 'none',
-                      borderRadius: 8,
-                      padding: 8,
-                      cursor: 'pointer',
-                      aspectRatio: '1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.15s',
-                    }}
-                    onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                    onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                   >
                     <Image
                       src={sticker.fileUrl}
@@ -320,24 +290,11 @@ export default function EmojiStickerPicker({
                 {gifs.map((gif) => (
                   <button
                     key={gif.id}
+                    className="picker-item"
                     onClick={() => {
                       onGifSelect(gif.id, gif.fileUrl, gif.format);
                       onClose();
                     }}
-                    style={{
-                      background: 'var(--bg-tertiary)',
-                      border: 'none',
-                      borderRadius: 8,
-                      padding: 8,
-                      cursor: 'pointer',
-                      aspectRatio: '1',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.15s',
-                    }}
-                    onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                    onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                   >
                     {gif.format === 'mp4' ? (
                       <video

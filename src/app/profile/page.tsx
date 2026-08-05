@@ -107,7 +107,7 @@ export default function ProfilePage() {
       <div
         style={{
           padding: '16px 24px',
-          borderBottom: '1px solid var(--bg-tertiary)',
+          borderBottom: '1px solid var(--stroke-soft)',
           background: 'var(--bg-secondary)',
           display: 'flex',
           alignItems: 'center',
@@ -115,10 +115,8 @@ export default function ProfilePage() {
         }}
       >
         <button className="btn btn-ghost btn-sm" onClick={() => router.push('/')}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <AppIcon name="arrowLeft" size={14} />
-            <span>{t('common.back')}</span>
-          </span>
+          <AppIcon name="arrowLeft" size={14} />
+          <span>{t('common.back')}</span>
         </button>
         <h1 style={{ fontSize: 18, fontWeight: 700 }}>Profile Settings</h1>
       </div>
@@ -133,7 +131,7 @@ export default function ProfilePage() {
                 width: 120,
                 height: 120,
                 fontSize: 48,
-                background: avatarUrl ? 'transparent' : 'var(--accent-gradient)',
+                background: avatarUrl ? 'transparent' : 'var(--accent)',
               }}
             >
               {avatarUrl ? (
@@ -166,10 +164,10 @@ export default function ProfilePage() {
               disabled={uploading}
             >
               {uploading ? 'Uploading...' : (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <>
                   <AppIcon name="camera" size={15} />
                   <span>Change Avatar</span>
-                </span>
+                </>
               )}
             </button>
           </div>
@@ -208,17 +206,17 @@ export default function ProfilePage() {
               }}
               placeholder="Tell us about yourself..."
               rows={3}
-              style={{ resize: 'vertical', fontFamily: 'inherit' }}
+              style={{ fontFamily: 'inherit' }}
             />
           </div>
 
           {/* Save Button */}
           <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <>
                 <AppIcon name="save" size={16} />
                 <span>Save Profile</span>
-              </span>
+              </>
             )}
           </button>
         </div>

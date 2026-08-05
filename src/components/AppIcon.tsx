@@ -31,7 +31,23 @@ export type AppIconName =
   | 'backup'
   | 'paint'
   | 'film'
-  | 'crown';
+  | 'crown'
+  | 'notifications'
+  | 'bell'
+  | 'bellOff'
+  | 'shield'
+  | 'key'
+  | 'eye'
+  | 'eyeOff'
+  | 'volume'
+  | 'volumeOff'
+  | 'device'
+  | 'devices'
+  | 'info'
+  | 'help'
+  | 'privacy'
+  | 'language'
+  | 'theme';
 
 interface AppIconProps {
   name: AppIconName;
@@ -61,12 +77,12 @@ function IconPaths({ name }: { name: AppIconName }) {
     case 'settings':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6h15M4.5 12h15m-15 6h15" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6h15M4.5 12h15m-16.5 6h15" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm10.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm-7.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Z" />
         </>
       );
     case 'logout':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.625A2.625 2.625 0 0013.125 3h-6.75A2.625 2.625 0 003.75 5.625v12.75A2.625 2.625 0 006.375 21h6.75a2.625 2.625 0 002.625-2.625V15m-6-3h11.25m0 0-3-3m3 3-3 3" />;
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.625A2.625 2.625 0 0013.125 3h-6.75A2.625 2.625 0 003.75 5.625V19.5a2.625 2.625 0 002.625 2.625h6.75a2.625 2.625 0 002.625-2.625V15m-5.25-3.75h7.5" />;
     case 'close':
       return <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />;
     case 'phone':
@@ -74,26 +90,21 @@ function IconPaths({ name }: { name: AppIconName }) {
     case 'micOn':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75a2.25 2.25 0 00-2.25 2.25v6a2.25 2.25 0 104.5 0V6A2.25 2.25 0 0012 3.75Z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75a2.25 2.25 0 00-2.25 2.25v6a2.25 2.25 0 004.5 0V6A2.25 2.25 0 0012 3.75Z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 10.5v1.5a5.25 5.25 0 0010.5 0v-1.5M12 17.25V21" />
         </>
       );
     case 'micOff':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75a2.25 2.25 0 00-2.25 2.25v2.25m0 3.75a2.25 2.25 0 104.5 0V9.75" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75a2.25 2.25 0 00-2.25 2.25v2.25m0 3.75a2.25 2.25 0 004.5 0V9.75" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 10.5v1.5a5.25 5.25 0 0010.5 0v-1.5M12 17.25V21M4.5 4.5l15 15" />
         </>
       );
     case 'chat':
       return <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12c0-4.28 3.47-7.75 7.75-7.75h4c4.28 0 7.75 3.47 7.75 7.75s-3.47 7.75-7.75 7.75H9.75l-4.5 2.25.75-3.75A7.74 7.74 0 012.25 12Z" />;
     case 'download':
-      return (
-        <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75v10.5m0 0-3-3m3 3 3-3" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 17.25v2.25c0 .621.504 1.125 1.125 1.125h14.25c.621 0 1.125-.504 1.125-1.125v-2.25" />
-        </>
-      );
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v10.5m0 0L8.25 9.75M12 13.5l3.75-3.75M4.5 17.25v-2.25c0-1.657 1.343-3 3-3h1" />;
     case 'paperclip':
       return <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739 10.682 20.432a4.5 4.5 0 01-6.364-6.364l8.047-8.047a3 3 0 114.243 4.243L8.56 18.312a1.5 1.5 0 01-2.121-2.122l7.424-7.424" />;
     case 'image':
@@ -189,6 +200,78 @@ function IconPaths({ name }: { name: AppIconName }) {
       );
     case 'crown':
       return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 18.75h16.5l-1.5-9-4.5 3-2.25-5.25-2.25 5.25-4.5-3-1.5 9Z" />;
+    case 'notifications':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25A3.75 3.75 0 0015 17.25H9A3.75 3.75 0 0012 20.25z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 4.5A4.5 4.5 0 0118 9v6a4.5 4.5 0 01-9 0V9a4.5 4.5 0 016-4.09V4.5z" />
+        </>
+      );
+    case 'bell':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-3m-5.25-3a5.25 5.25 0 1110.5 0c0 2.1-.9 3.99-2.34 5.25H12m0 4.5a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />;
+    case 'bellOff':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-3m-5.25-3a5.25 5.25 0 1110.5 0c0 2.1-.9 3.99-2.34 5.25H9.75m0 4.5a2.25 2.25 0 104.5 0m-4.5 0V18" />;
+    case 'shield':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15l3.75-2.25m.75 3.75A9 9 0 015.25 6.75 9 9 0 0112 3a9 9 0 016.75 14.25z" />;
+    case 'key':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75A3.75 3.75 0 1012 8.25a3.75 3.75 0 000 7.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9.75L17.25 11.25" />
+        </>
+      );
+    case 'eye':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5c-2.625 0-5.25 1.125-7.125 2.7-2 1.625-3.125 3.7-3.125 5.85s1.125 4.225 3.125 5.85c1.875 1.575 4.5 2.7 7.125 2.7s5.25-1.125 7.125-2.7c2-1.625 3.125-3.7 3.125-5.85s-1.125-4.225-3.125-5.85C17.25 5.625 14.625 4.5 12 4.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a3 3 0 100-6 3 3 0 000 6z" />
+        </>
+      );
+    case 'eyeOff':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 2.25l19.5 19.5M9.75 9.75a3 3 0 114.246 4.246M12 4.5c-2.625 0-5.25 1.125-7.125 2.7-2 1.625-3.125 3.7-3.125 5.85s1.125 4.225 3.125 5.85c1.875 1.575 4.5 2.7 7.125 2.7s5.25-1.125 7.125-2.7c2-1.625 3.125-3.7 3.125-5.85s-1.125-4.225-3.125-5.85c-1.875-1.575-4.5-2.7-7.125-2.7" />;
+    case 'volume':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m3-6-3 3-3-3" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 8.25h3a2.25 2.25 0 011.59.66l1.5 1.5a2.25 2.25 0 001.59.66h3.25" />
+        </>
+      );
+    case 'volumeOff':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m3-6-3 3-3-3M2.25 2.25l19.5 19.5" />;
+    case 'device':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75h19.5v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 17.25h7.5" />
+        </>
+      );
+    case 'devices':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6h19.5v2.25H2.25zM2.25 11.25h19.5v8.25a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 17.25z" />
+        </>
+      );
+    case 'info':
+      return (
+        <>
+          <circle cx="12" cy="12" r="9.75" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75v-4.5" />
+          <circle cx="12" cy="9.75" r="0.75" fill="currentColor" />
+        </>
+      );
+    case 'help':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 14.65A5.25 5.25 0 0112 9a5.25 5.25 0 011.5 3.75v1.5a.75.75 0 101.5 0v-1.5A3.75 3.75 0 0012 7.5a3.75 3.75 0 00-3.19 5.44.75.75 0 01-1.06 1.71zM12 16.5h.008v.008H12z" />;
+    case 'privacy':
+      return (
+        <>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75A3.75 3.75 0 1012 8.25a3.75 3.75 0 000 7.5z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 7.5h8.25a2.25 2.25 0 012.25 2.25v5.25a2.25 2.25 0 01-2.25 2.25H9.75" />
+        </>
+      );
+    case 'language':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5M12 4.5L4.5 12l7.5 7.5L19.5 12 12 4.5z" />;
+    case 'theme':
+      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25a9.75 9.75 0 019.75 9.75c0 1.83-.52 3.55-1.4 5.04l-1.35 2.25a.75.75 0 01-1.19-.56V13.5a1.5 1.5 0 00-1.5-1.5H9.75a1.5 1.5 0 00-1.5 1.5v5.04a.75.75 0 01-1.19.56l-1.35-2.25A9.72 9.72 0 012.25 12c0-1.83.52-3.55 1.4-5.04l1.35-2.25A.75.75 0 015.4 4.08L12 3.75l5.25.33" />;
     default:
       return null;
   }

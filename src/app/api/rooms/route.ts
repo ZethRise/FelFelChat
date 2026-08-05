@@ -28,7 +28,23 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ rooms });
+    // Compute unread counts per room
+    const roomsWithUnread = await Promise.all(
+      rooms.map(async (room) => {
+        const membership = room.members.find((m) => m.userId === user.id);
+        const lastReadAt = membership?.lastReadAt;
+        const unreadCount = await prisma.message.count({
+          where: {
+            roomId: room.id,
+            userId: { not: user.id },
+            createdAt: lastReadAt ? { gt: lastReadAt } : undefined,
+          },
+        });
+        return { ...room, unreadCount };
+      })
+    );
+
+    return NextResponse.json({ rooms: roomsWithUnread });
   } catch (error) {
     console.error('GET /api/rooms error:', error);
     return NextResponse.json({ error: 'serverError' }, { status: 500 });

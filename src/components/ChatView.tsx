@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, FormEvent, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { getSocket } from '@/lib/socket';
 import ImagePreviewModal from './ImagePreviewModal';
 import UserProfileModal from './UserProfileModal';
@@ -10,6 +11,7 @@ import { compressImage } from '@/lib/imageCompression';
 import { decryptHushMessage, encryptHushMessage, isHushEncryptedMessage } from '@/lib/hushCrypto';
 import Image from 'next/image';
 import AppIcon from './AppIcon';
+import { fadeSlideUp } from '@/lib/animations';
 
 interface User {
   id: string;
@@ -68,6 +70,7 @@ interface ChatViewProps {
   user: User;
   onlineUsers: Set<string>;
   onToggleSidebar: () => void;
+  onCloseRoom: () => void;
   onStartCall: (calleeId: string, calleeName: string) => void;
   t: (key: string) => string;
   dir: 'rtl' | 'ltr';
@@ -75,8 +78,8 @@ interface ChatViewProps {
 }
 
 const avatarColors = [
-  '#e84545', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96c93d',
-  '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe',
+  '#3b82f6', '#6366f1', '#8b5cf6', '#06b6d4', '#14b8a6',
+  '#22c55e', '#f97316', '#ef4444', '#ec4899', '#6d28d9',
 ];
 
 function getAvatarColor(name: string) {
@@ -90,7 +93,7 @@ function splitReadBy(value?: string): string[] {
     return [];
   }
   return value
-    .split(/[,\s;]+/)
+    .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 }
@@ -106,6 +109,7 @@ export default function ChatView({
   user,
   onlineUsers,
   onToggleSidebar,
+  onCloseRoom,
   onStartCall,
   t,
   dir,
@@ -636,8 +640,17 @@ export default function ChatView({
       <div className="chat-header">
         <div className="chat-header-main">
           <div className="chat-header-left">
-            <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={onToggleSidebar}>
-              <AppIcon name="menu" size={18} />
+            <button
+              type="button"
+              className="btn btn-ghost btn-icon btn-sm"
+              onClick={() => {
+                if (confirm(t('chat.closeRoomConfirm') || 'Close this chat?')) {
+                  onCloseRoom();
+                }
+              }}
+              title={t('chat.closeRoomConfirm')}
+            >
+              <AppIcon name="close" size={18} />
             </button>
             <div
               className="chat-header-room"
@@ -716,7 +729,7 @@ export default function ChatView({
                   className="btn btn-ghost btn-icon btn-sm"
                   onClick={handleRemoveRoomPhoto}
                   title={t('room.removePhoto')}
-                  style={{ color: 'var(--error)' }}
+                  style={{ color: 'var(--danger)' }}
                 >
                   <AppIcon name="trash" size={16} />
                 </button>
@@ -750,7 +763,7 @@ export default function ChatView({
                   minWidth: 120,
                   height: 36,
                   borderRadius: 14,
-                  background: index % 3 === 0 ? 'rgba(255, 104, 58, 0.26)' : 'rgba(255, 146, 108, 0.16)',
+                  background: index % 3 === 0 ? 'rgba(37, 99, 235, 0.25)' : 'var(--bg-tertiary)',
                 }}
               />
             ))}
@@ -781,18 +794,20 @@ export default function ChatView({
               const readByUsers = splitReadBy(msg.readBy);
               const isReadByPeer = otherUser ? readByUsers.includes(otherUser.id) : readByUsers.length > 0;
               const ownStatusText = isPending ? '...' : isReadByPeer ? '✓✓' : '✓';
-              const ownStatusColor = isPending ? 'rgba(255,255,255,0.5)' : isReadByPeer ? '#9be2b3' : 'rgba(255,255,255,0.72)';
+              const ownStatusColor = isPending ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.9)';
 
               return (
-                <div
+                <motion.div
                   key={msg.id}
-                  className={isEntering ? 'chat-message-enter' : undefined}
+                  initial={isEntering ? { opacity: 0, y: 8 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   style={{
                     display: 'flex',
                     flexDirection: isOwn ? (dir === 'rtl' ? 'row' : 'row-reverse') : (dir === 'rtl' ? 'row-reverse' : 'row'),
                   alignItems: 'flex-end',
                   gap: 8,
-                  marginTop: isFirstInGroup ? 12 : 2,
+                  marginTop: isFirstInGroup ? 11 : 1,
                 }}
               >
                 {/* Avatar (side) - clickable */}
@@ -824,7 +839,7 @@ export default function ChatView({
                   )}
                 </div>
 
-                {/* Bubble */}
+                {/* Bubble + reply row */}
                 <div
                   ref={(el) => {
                     if (el) messageRefs.current.set(msg.id, el);
@@ -832,25 +847,31 @@ export default function ChatView({
                   style={{
                     maxWidth: '70%',
                     display: 'flex',
-                    flexDirection: 'column',
+                    flexDirection: 'row',
+                    alignItems: 'flex-end',
                     gap: 4,
                   }}
                 >
+                  {/* Actual bubble */}
                   <div
                     className={isPending ? 'chat-message-pending' : undefined}
                     style={{
-                      padding: '10px 14px',
+                      flex: 1,
+                      minWidth: 0,
+                      padding: '8px 12px',
                       borderRadius: isOwn
-                        ? dir === 'rtl' ? '16px 4px 16px 16px' : '4px 16px 16px 16px'
-                        : dir === 'rtl' ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
+                        ? dir === 'rtl' ? '14px 4px 14px 14px' : '4px 14px 14px 14px'
+                        : dir === 'rtl' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
                       background: isOwn
                         ? 'var(--bubble-own)'
                         : 'var(--bubble-other)',
                       color: isOwn ? 'var(--bubble-own-text)' : 'var(--bubble-other-text)',
-                      boxShadow: '0 8px 18px rgba(0,0,0,0.14)',
+                      boxShadow: isOwn ? '0 1px 3px rgba(37, 99, 235, 0.2)' : '0 1px 2px rgba(0, 0, 0, 0.15)',
                       wordBreak: 'break-word',
-                      opacity: isPending ? 0.75 : 1,
-                      filter: isPending ? 'saturate(0.8)' : 'none',
+                      opacity: isPending ? 0.65 : 1,
+                      filter: isPending ? 'saturate(0.7)' : 'none',
+                      fontSize: 14,
+                      lineHeight: 1.45,
                     }}
                   >
                     {/* Sender name (only in groups, for others' messages) */}
@@ -859,7 +880,7 @@ export default function ChatView({
                         style={{
                           fontSize: 13,
                           fontWeight: 600,
-                          color: isOwn ? 'rgba(255,255,255,0.9)' : 'var(--accent)',
+                          color: isOwn ? 'rgba(255,255,255,0.9)' : 'var(--info)',
                           marginBottom: 4,
                           cursor: 'pointer',
                         }}
@@ -884,8 +905,8 @@ export default function ChatView({
                         style={{
                           padding: '6px 10px',
                           marginBottom: 6,
-                          borderLeft: `3px solid ${isOwn ? 'rgba(255,255,255,0.4)' : 'var(--accent)'}`,
-                          background: isOwn ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.1)',
+                          borderLeft: `3px solid ${isOwn ? 'rgba(255,255,255,0.3)' : 'var(--info)'}`,
+                          background: isOwn ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.04)',
                           borderRadius: 4,
                           fontSize: 12,
                           cursor: 'pointer',
@@ -1190,17 +1211,25 @@ export default function ChatView({
                     ↩ {t('chat.reply')}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             );
           })
         )}
 
         {/* Typing indicator */}
+        <AnimatePresence>
         {typingUser && (
-          <div style={{ fontSize: 13, color: 'var(--fg-muted)', padding: '4px 40px' }}>
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ fontSize: 13, color: 'var(--fg-muted)', padding: '4px 40px', overflow: 'hidden' }}
+          >
             {typingUser} {t('chat.typing')}
-          </div>
+          </motion.div>
         )}
+        </AnimatePresence>
 
         <div ref={messagesEndRef} />
       </div>
@@ -1209,15 +1238,23 @@ export default function ChatView({
       {(room.type !== 'CHANNEL' || user.isSuperAdmin) && (
         <>
           {/* Reply preview bar */}
+          <AnimatePresence>
           {replyingTo && (
-            <div style={{
-              padding: '8px 20px',
-              background: 'var(--bg-tertiary)',
-              borderTop: '1px solid var(--bg-tertiary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              style={{
+                overflow: 'hidden',
+                padding: '8px 20px',
+                background: 'var(--bg-secondary)',
+                borderTop: '1px solid var(--stroke-soft)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 2 }}>
                   {t('chat.replyTo')} {replyingTo.user.displayName || replyingTo.user.username}
@@ -1236,14 +1273,15 @@ export default function ChatView({
                   <span>{t('chat.cancelReply')}</span>
                 </span>
               </button>
-            </div>
+            </motion.div>
           )}
+          </AnimatePresence>
 
         <form
           onSubmit={sendMessage}
           className="chat-composer"
           style={{
-            padding: '12px 20px',
+            padding: '10px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -1299,7 +1337,7 @@ export default function ChatView({
             style={{
               flex: 1,
               height: 42,
-              borderRadius: 9999,
+              borderRadius: 'var(--radius-full)',
               paddingInline: 16,
               opacity: sendInputBurst ? 0.55 : 1,
               transform: sendInputBurst ? 'translateY(1px) scale(0.995)' : 'translateY(0) scale(1)',
@@ -1312,19 +1350,20 @@ export default function ChatView({
           />
 
           {/* Send */}
-          <button
+          <motion.button
             type="submit"
             className="btn btn-primary btn-icon"
             disabled={!text.trim() && !uploading}
             style={{
               transform: dir === 'rtl' ? 'scaleX(-1)' : 'none',
-              transition: 'transform 0.2s ease',
               width: 42,
               height: 42,
             }}
+            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
           >
             <AppIcon name="send" size={18} />
-          </button>
+          </motion.button>
         </form>
         </>
       )}

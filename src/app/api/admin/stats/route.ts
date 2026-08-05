@@ -21,7 +21,7 @@ function getDirSize(dirPath: string): number {
     for (const file of files) {
       if (file.isFile()) {
         try {
-          const fullPath = path.join(file.parentPath || file.path || dirPath, file.name);
+          const fullPath = path.join(file.parentPath ?? dirPath, file.name);
           total += statSync(fullPath).size;
         } catch {}
       }

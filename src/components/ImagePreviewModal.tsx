@@ -1,7 +1,9 @@
 'use client';
 
+import { motion } from 'motion/react';
 import Image from 'next/image';
 import AppIcon from './AppIcon';
+import { overlayFade, scaleIn } from '@/lib/animations';
 
 interface ImagePreviewModalProps {
   imageUrl: string;
@@ -17,25 +19,20 @@ export default function ImagePreviewModal({ imageUrl, onClose }: ImagePreviewMod
   };
 
   return (
-    <div
+    <motion.div
       className="modal-overlay"
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: 20,
-      }}
+      variants={overlayFade}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
     >
-      <div
+      <motion.div
         onClick={(e) => e.stopPropagation()}
+        variants={scaleIn}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -55,25 +52,21 @@ export default function ImagePreviewModal({ imageUrl, onClose }: ImagePreviewMod
             maxWidth: '90vw',
             maxHeight: '80vh',
             objectFit: 'contain',
-            borderRadius: 8,
+            borderRadius: 'var(--radius)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           }}
         />
         <div style={{ display: 'flex', gap: 12 }}>
           <button className="btn btn-primary" onClick={handleDownload}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <AppIcon name="download" size={16} />
-              <span>Download</span>
-            </span>
+            <AppIcon name="download" size={16} />
+            <span>Download</span>
           </button>
           <button className="btn btn-ghost" onClick={onClose}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <AppIcon name="close" size={16} />
-              <span>Close</span>
-            </span>
+            <AppIcon name="close" size={16} />
+            <span>Close</span>
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

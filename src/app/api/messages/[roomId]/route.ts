@@ -167,6 +167,8 @@ export async function POST(
           select: { userId: true },
         });
         for (const member of roomMembers) {
+          // Skip the sender — client already has it from the API response
+          if (member.userId === user.id) continue;
           io.to(`user:${member.userId}`).emit('message:new', { roomId, message });
         }
       }

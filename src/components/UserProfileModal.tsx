@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import Image from 'next/image';
 import AppIcon from './AppIcon';
+import { overlayFade, scaleIn } from '@/lib/animations';
 
 interface User {
   id: string;
@@ -43,32 +45,21 @@ export default function UserProfileModal({ userId, onClose, onStartChat }: UserP
   };
 
   return (
-    <div
+    <motion.div
       className="modal-overlay"
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
+      variants={overlayFade}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
     >
-      <div
-        className="modal-content"
+      <motion.div
+        className="modal"
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--bg-secondary)',
-          borderRadius: 12,
-          padding: 24,
-          maxWidth: 400,
-          width: '90%',
-        }}
+        variants={scaleIn}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
       >
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
@@ -84,7 +75,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }: UserP
                   width: 100,
                   height: 100,
                   fontSize: 40,
-                  background: profile.avatarUrl ? 'transparent' : 'var(--accent-gradient)',
+                  background: profile.avatarUrl ? 'transparent' : 'var(--accent)',
                 }}
               >
                 {profile.avatarUrl ? (
@@ -114,7 +105,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }: UserP
 
             {/* Bio */}
             {profile.bio && (
-              <div style={{ marginBottom: 20, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 8 }}>
+              <div style={{ marginBottom: 20, padding: 12, background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)' }}>
                 <p style={{ fontSize: 14, lineHeight: 1.5 }}>{profile.bio}</p>
               </div>
             )}
@@ -142,10 +133,8 @@ export default function UserProfileModal({ userId, onClose, onStartChat }: UserP
                     onClose();
                   }}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <AppIcon name="chat" size={16} />
-                    <span>Start Chat</span>
-                  </span>
+                  <AppIcon name="chat" size={16} />
+                  <span>Start Chat</span>
                 </button>
               )}
               <button className="btn btn-ghost" onClick={onClose}>
@@ -156,7 +145,7 @@ export default function UserProfileModal({ userId, onClose, onStartChat }: UserP
         ) : (
           <div style={{ textAlign: 'center', padding: 20, color: 'var(--fg-muted)' }}>User not found</div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
