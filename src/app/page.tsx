@@ -238,15 +238,17 @@ export default function ChatPage() {
       throw new Error('Media devices are not available');
     }
     const rawStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    // Apply RNNoise noise suppression
-    try {
-      const processedStream = await applyNoiseSuppression(rawStream);
-      console.log('[Call] Noise suppression active');
-      localStreamRef.current = processedStream;
-    } catch (err) {
-      console.warn('[Call] Noise suppression unavailable, using raw audio:', err);
-      localStreamRef.current = rawStream;
-    }
+    // TEMP: Disable noise suppression to test one-way audio
+    // try {
+    //   const processedStream = await applyNoiseSuppression(rawStream);
+    //   console.log('[Call] Noise suppression active');
+    //   localStreamRef.current = processedStream;
+    // } catch (err) {
+    //   console.warn('[Call] Noise suppression unavailable, using raw audio:', err);
+    //   localStreamRef.current = rawStream;
+    // }
+    localStreamRef.current = rawStream;
+    console.log('[Call] Using raw audio (noise suppression disabled for testing)');
     setIsCallMuted(false);
     return localStreamRef.current;
   }, []);
