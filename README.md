@@ -116,7 +116,7 @@ FelFelChat/
 ## 🚀 راه‌اندازی سریع (لینوکس)
 
 ```bash
-git clone https://git.diastom.xyz/ZethRise/FelFelChat.git && cd FelFelChat && bash install.sh
+curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | bash
 ```
 
 بعد از نصب، با دستور `felfel` اپ را مدیریت کنید.
@@ -429,7 +429,7 @@ FelFelChat/
 ## 🚀 Quick Install (Linux)
 
 ```bash
-git clone https://git.diastom.xyz/ZethRise/FelFelChat.git && cd FelFelChat && bash install.sh
+curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | bash
 ```
 
 After installation, use the `felfel` command to manage your server.
