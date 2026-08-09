@@ -2,20 +2,21 @@
 
 # 💬 فل‌فل‌چت
 
-**فل‌فل‌چت** یک پیام‌رسان بلادرنگ مدرن و امن است که با Next.js، Socket.IO و MongoDB ساخته شده. این پروژه برای استقرار روی سرور خودتان (self-hosted) طراحی شده و از ویژگی‌هایی مانند تماس صوتی، رمزنگاری، چندزبانگی و پنل مدیریت پیشرفته برخوردار است.
+**فل‌فل‌چت** یک پیام‌رسان بلادرنگ مدرن و امن است که با Next.js، Socket.IO و Prisma/MongoDB ساخته شده. این پروژه برای استقرار روی سرور خودتان (self-hosted) طراحی شده و از ویژگی‌هایی مانند تماس صوتی، رمزنگاری، چندزبانگی و پنل مدیریت پیشرفته برخوردار است.
 
 ---
 
 ## ✨ ویژگی‌ها
 
 - **پیام‌رسانی بلادرنگ** — چت گروهی و خصوصی با Socket.IO
-- **تماس صوتی** — تماس یک‌به‌یک از طریق WebRTC
+- **تماس صوتی** — تماس یک‌به‌یک از طریق WebRTC با TURN/STUN
 - **رمزنگاری هوشمند** — پیام‌های حساس با `hushCrypto` رمزگذاری می‌شوند
-- **آپلود فایل** — ارسال تصویر، ویدیو، PDF و سایر فایل‌ها
+- **آپلود فایل** — ارسال تصویر، ویدیو، PDF و سایر فایل‌ها (با فشرده‌سازی خودکار)
 - **استیکر و GIF** — پشتیبانی از استیکر و GIF اختصاصی
 - **احراز هویت امن** — JWT در کوکی، هشینگ رمز عبور با bcrypt
 - **پنل مدیریت** — مدیریت کاربران، اتاق‌ها، تماس‌ها، پشتیبان‌گیری و ذخیره‌سازی
 - **چندزبانگی** — پشتیبانی از فارسی و انگلیسی (RTL/LTR)
+- **طراحی موبایل‌محور** — رابط کاربری شبیه تلگرام با فولدرها، منوی همبرگری و ۱۰۰dvh
 - **لاگ حسابرسی** — ثبت تمامی رویدادهای مهم سیستم
 - **پشتیبان‌گیری امن** — پشتیبان‌گیری قابل‌ تأیید با امضای رمزنگاری
 - **نرخ‌محدودی** — محافظت در برابر سوءاستفاده از API
@@ -25,17 +26,31 @@
 
 ## 🏗️ معماری و تکنولوژی‌ها
 
-| بخش            | تکنولوژی                         |
+| بخش | تکنولوژی |
 | -------------- | -------------------------------- |
-| فریم‌ورک       | Next.js 16 (App Router)          |
-| بک‌اند بلادرنگ | Socket.IO 4                      |
-| پایگاه داده    | MongoDB (از طریق Prisma ORM)     |
-| احراز هویت     | JWT + bcryptjs                   |
-| استایل         | Tailwind CSS 4 + Vanilla CSS     |
-| فونت           | Vazirmatn (فارسی) + Sora (لاتین) |
-| تماس صوتی      | WebRTC + TURN                    |
-| مانیتورینگ     | Sentry                           |
-| زبان           | TypeScript                       |
+| فریم‌ورک | Next.js 16 (App Router) |
+| بک‌اند بلادرنگ | Socket.IO 4 |
+| پایگاه داده | MongoDB (از طریق Prisma ORM) |
+| احراز هویت | JWT + bcryptjs |
+| استایل | Tailwind CSS 4 + Vanilla CSS |
+| فونت | Vazirmatn (فارسی) + Sora (لاتین) |
+| تماس صوتی | WebRTC + Google STUN + Open Relay TURN |
+| مانیتورینگ | Sentry |
+| زبان | TypeScript |
+
+---
+
+## 📱 طراحی موبایل
+
+رابط کاربری موبایل بر اساس الگوی تلگرام طراحی شده:
+
+- **لیست چت تمام‌صفحه** — بدون کشوی پایین، لیست چت‌ها صفحه اصلی موبایل است
+- **منوی همبرگری** — دکمه ☰ برای باز کردن پنل تنظیمات از سمت چپ
+- **تب‌های فولدر** — همه چت‌ها، خصوصی، گروه‌ها (زبان فارسی)
+- **هدر چت** — دکمه بازگشت به جای دکمه بستن (X)
+- **نوار ایمنی** — رعایت `env(safe-area-inset-*)` برای آیفون
+- **ارتفاع ۱۰۰dvh** — جلوگیری از پرش آدرس‌بار سافاری
+- **targets لمسی ۴۴px** — تمام دکمه‌ها و ورودی‌ها حداقل ۴۴ پیکسل
 
 ---
 
@@ -53,7 +68,7 @@ FelFelChat/
 │   │   └── api/              # REST API Routes
 │   ├── components/           # کامپوننت‌های React
 │   │   ├── ChatView.tsx      # رابط اصلی چت
-│   │   ├── Sidebar.tsx       # نوار کناری (لیست اتاق‌ها)
+│   │   ├── Sidebar.tsx       # لیست چت‌ها (موبایل + دسکتاپ)
 │   │   ├── VoiceCall.tsx     # کامپوننت تماس صوتی
 │   │   ├── AppIcon.tsx       # آیکون‌های اپ
 │   │   ├── EmojiStickerPicker.tsx  # انتخاب‌گر ایموجی/استیکر
@@ -79,6 +94,8 @@ FelFelChat/
 │   ├── schema.prisma         # مدل‌های پایگاه داده
 │   ├── seed.ts               # داده‌های اولیه
 │   └── migrations/           # تاریخچه مایگریشن‌ها
+├── public/
+│   └── noise-suppress/       # فایل‌های WASM (اختیاری)
 ├── server.mjs                # سرور Node.js سفارشی
 ├── docs/
 │   └── OPERATIONS.md         # راهنمای عملیات و نگهداری
@@ -98,10 +115,10 @@ FelFelChat/
 
 ## 🚀 راه‌اندازی سریع (لینوکس)
 
-با یک دستور، همه چیز نصب و راه‌اندازی می‌شود:
-
 ```bash
-curl -sL https://raw.githubusercontent.com/MatinSenPai/FelFelChat/main/install.sh | bash
+git clone https://git.diastom.xyz/ZethRise/FelFelChat.git
+cd FelFelChat
+bash install.sh
 ```
 
 بعد از نصب، با دستور `felfel` اپ را مدیریت کنید.
@@ -113,7 +130,7 @@ curl -sL https://raw.githubusercontent.com/MatinSenPai/FelFelChat/main/install.s
 ### ۱. کلون پروژه
 
 ```bash
-git clone https://github.com/MatinSenPai/FelFelChat.git
+git clone https://git.diastom.xyz/ZethRise/FelFelChat.git
 cd FelFelChat
 ```
 
@@ -191,40 +208,40 @@ npm start
 
 ## 📜 دستورات مفید
 
-| دستور                | کاربرد                         |
+| دستور | کاربرد |
 | -------------------- | ------------------------------ |
-| `npm run dev`        | اجرا در محیط توسعه             |
-| `npm run build`      | ساخت نسخه پروداکشن             |
-| `npm start`          | اجرا در محیط پروداکشن          |
-| `npm run lint`       | بررسی کیفیت کد                 |
+| `npm run dev` | اجرا در محیط توسعه |
+| `npm run build` | ساخت نسخه پروداکشن |
+| `npm start` | اجرا در محیط پروداکشن |
+| `npm run lint` | بررسی کیفیت کد |
 | `npm run db:migrate` | اجرای مایگریشن‌های پایگاه داده |
-| `npm run db:seed`    | بارگذاری داده‌های اولیه        |
-| `npm run db:studio`  | باز کردن Prisma Studio         |
+| `npm run db:seed` | بارگذاری داده‌های اولیه |
+| `npm run db:studio` | باز کردن Prisma Studio |
 
 ---
 
 ## 🔐 متغیرهای محیطی
 
-| متغیر                          | اجباری | توضیح                        |
+| متغیر | اجباری | توضیح |
 | ------------------------------ | ------ | ---------------------------- |
-| `JWT_SECRET`                   | ✅     | کلید رمزنگاری توکن‌ها        |
-| `DATABASE_URL`                 | ✅     | آدرس اتصال MongoDB           |
-| `APP_ORIGIN`                   | ✅     | آدرس عمومی اپ                |
-| `BACKUP_SIGNING_KEY`           | ✅     | کلید امضای فایل‌های پشتیبان  |
-| `PORT`                         | ❌     | پورت سرور (پیش‌فرض: ۳۰۰۰)    |
-| `UPLOAD_DIR`                   | ❌     | مسیر ذخیره فایل‌های آپلودشده |
-| `UPLOAD_MAX_SIZE_MB`           | ❌     | حداکثر سایز فایل (MB)        |
-| `SENTRY_DSN`                   | ❌     | DSN مانیتورینگ Sentry        |
-| `NEXT_PUBLIC_WEBRTC_TURN_URLS` | ❌     | آدرس‌های TURN Server         |
+| `JWT_SECRET` | ✅ | کلید رمزنگاری توکن‌ها |
+| `DATABASE_URL` | ✅ | آدرس اتصال MongoDB |
+| `APP_ORIGIN` | ✅ | آدرس عمومی اپ |
+| `BACKUP_SIGNING_KEY` | ✅ | کلید امضای فایل‌های پشتیبان |
+| `PORT` | ❌ | پورت سرور (پیش‌فرض: ۳۰۰۰) |
+| `UPLOAD_DIR` | ❌ | مسیر ذخیره فایل‌های آپلودشده |
+| `UPLOAD_MAX_SIZE_MB` | ❌ | حداکثر سایز فایل (MB) |
+| `SENTRY_DSN` | ❌ | DSN مانیتورینگ Sentry |
+| `NEXT_PUBLIC_WEBRTC_TURN_URLS` | ❌ | آدرس‌های TURN Server |
 
 ---
 
 ## 🏥 بررسی سلامت سرور
 
-| Endpoint          | توضیح           |
+| Endpoint | توضیح |
 | ----------------- | --------------- |
-| `GET /api/health` | وضعیت کلی سرور  |
-| `GET /api/ready`  | آمادگی سرویس‌ها |
+| `GET /api/health` | وضعیت کلی سرور |
+| `GET /api/ready` | آمادگی سرویس‌ها |
 
 ---
 
@@ -242,16 +259,16 @@ npm start
 
 قابلیت‌های پنل مدیریت:
 
-| بخش         | توضیح                              |
+| بخش | توضیح |
 | ----------- | ---------------------------------- |
-| Users       | مدیریت کاربران، بستن حساب، بن کردن |
-| Rooms       | مدیریت اتاق‌های گفتگو              |
-| Messages    | مشاهده پیام‌های همه اتاق‌ها        |
-| Calls       | تاریخچه و وضعیت تماس‌های صوتی      |
-| Storage     | مدیریت فضای ذخیره‌سازی             |
-| Backup      | ساخت و بازیابی پشتیبان             |
-| Settings    | روشن/خاموش کردن ثبت‌نام            |
-| Sticker/GIF | آپلود و مدیریت استیکر و GIF        |
+| Users | مدیریت کاربران، بستن حساب، بن کردن |
+| Rooms | مدیریت اتاق‌های گفتگو |
+| Messages | مشاهده پیام‌های همه اتاق‌ها |
+| Calls | تاریخچه و وضعیت تماس‌های صوتی |
+| Storage | مدیریت فضای ذخیره‌سازی |
+| Backup | ساخت و بازیابی پشتیبان |
+| Settings | روشن/خاموش کردن ثبت‌نام |
+| Sticker/GIF | آپلود و مدیریت استیکر و GIF |
 
 ### تغییر مشخصات سوپرادمین (از طریق وب)
 
@@ -294,26 +311,27 @@ felfel superadmin
 
 ---
 
----
-
 <div dir="ltr">
 
 # 💬 FelFelChat
 
-**FelFelChat** is a modern, secure, self-hosted real-time messaging application built with Next.js, Socket.IO, and MongoDB. It features real-time chat, WebRTC voice calls, end-to-end encryption, multilingual support (Farsi/English), and a powerful admin panel.
+**FelFelChat** is a modern, secure, self-hosted real-time messaging application built with Next.js, Socket.IO, and Prisma/MongoDB. It features real-time chat, WebRTC voice calls, end-to-end encryption, multilingual support (Farsi/English), and a powerful admin panel.
+
+🔗 **Repository:** https://git.diastom.xyz/ZethRise/FelFelChat
 
 ---
 
 ## ✨ Features
 
 - **Real-time Messaging** — Group and private chat powered by Socket.IO
-- **Voice Calls** — One-on-one calls via WebRTC
+- **Voice Calls** — One-on-one calls via WebRTC with TURN/STUN fallback
 - **Message Encryption** — Sensitive messages encrypted with `hushCrypto`
-- **File Uploads** — Send images, videos, PDFs, and more
+- **File Uploads** — Send images, videos, PDFs, and more (with auto-compression)
 - **Stickers & GIFs** — Custom sticker and GIF support
 - **Secure Auth** — JWT cookies + bcrypt password hashing
 - **Admin Panel** — Manage users, rooms, calls, backups, and storage
 - **Multilingual** — Full Farsi and English support with RTL/LTR layouts
+- **Mobile-First UI** — Telegram-style interface with folder tabs, hamburger menu, and 100dvh
 - **Audit Logging** — All critical events are logged
 - **Signed Backups** — Cryptographically signed backup/restore
 - **Rate Limiting** — API abuse protection
@@ -323,17 +341,31 @@ felfel superadmin
 
 ## 🏗️ Tech Stack
 
-| Layer       | Technology                         |
+| Layer | Technology |
 | ----------- | ---------------------------------- |
-| Framework   | Next.js 16 (App Router)            |
-| Real-time   | Socket.IO 4                        |
-| Database    | MongoDB via Prisma ORM             |
-| Auth        | JWT + bcryptjs                     |
-| Styling     | Tailwind CSS 4 + Vanilla CSS       |
-| Fonts       | Vazirmatn (Persian) + Sora (Latin) |
-| Voice Calls | WebRTC + TURN                      |
-| Monitoring  | Sentry                             |
-| Language    | TypeScript                         |
+| Framework | Next.js 16 (App Router) |
+| Real-time | Socket.IO 4 |
+| Database | MongoDB via Prisma ORM |
+| Auth | JWT + bcryptjs |
+| Styling | Tailwind CSS 4 + Vanilla CSS |
+| Fonts | Vazirmatn (Persian) + Sora (Latin) |
+| Voice Calls | WebRTC + Google STUN + Open Relay TURN |
+| Monitoring | Sentry |
+| Language | TypeScript |
+
+---
+
+## 📱 Mobile Design
+
+The mobile UI is modeled after Telegram:
+
+- **Full-screen chat list** — no bottom drawer; chat list is the mobile home screen
+- **Hamburger menu** — ☰ button opens settings/admin/logout from the left
+- **Folder tabs** — All Chats, Personal, Groups (Farsi and English)
+- **Chat header** — back arrow instead of close (X) button
+- **Safe areas** — respects `env(safe-area-inset-*)` for iPhone notch/home indicator
+- **100dvh height** — prevents Safari address bar jump
+- **44px touch targets** — all buttons and inputs are minimum 44px
 
 ---
 
@@ -351,7 +383,7 @@ FelFelChat/
 │   │   └── api/              # REST API routes
 │   ├── components/           # React components
 │   │   ├── ChatView.tsx      # Main chat interface
-│   │   ├── Sidebar.tsx       # Room list sidebar
+│   │   ├── Sidebar.tsx       # Chat list (mobile + desktop)
 │   │   ├── VoiceCall.tsx     # Voice call UI
 │   │   ├── AppIcon.tsx       # App icons
 │   │   ├── EmojiStickerPicker.tsx  # Emoji/sticker picker
@@ -377,6 +409,8 @@ FelFelChat/
 │   ├── schema.prisma         # Database models
 │   ├── seed.ts               # Seed data
 │   └── migrations/           # Migration history
+├── public/
+│   └── noise-suppress/       # WASM files (optional)
 ├── server.mjs                # Custom Node.js server (Next.js + Socket.IO)
 ├── docs/
 │   └── OPERATIONS.md         # Operations runbook
@@ -396,10 +430,10 @@ FelFelChat/
 
 ## 🚀 Quick Install (Linux)
 
-Install and configure everything with a single command:
-
 ```bash
-curl -sL https://raw.githubusercontent.com/MatinSenPai/FelFelChat/main/install.sh | bash
+git clone https://git.diastom.xyz/ZethRise/FelFelChat.git
+cd FelFelChat
+bash install.sh
 ```
 
 After installation, use the `felfel` command to manage your server.
@@ -411,7 +445,7 @@ After installation, use the `felfel` command to manage your server.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/MatinSenPai/FelFelChat.git
+git clone https://git.diastom.xyz/ZethRise/FelFelChat.git
 cd FelFelChat
 ```
 
@@ -491,42 +525,42 @@ The app is available at `http://localhost:3000`.
 
 ## 📜 Scripts
 
-| Command              | Description               |
+| Command | Description |
 | -------------------- | ------------------------- |
-| `npm run dev`        | Start in development mode |
-| `npm run build`      | Build for production      |
-| `npm start`          | Start in production mode  |
-| `npm run lint`       | Lint the codebase         |
+| `npm run dev` | Start in development mode |
+| `npm run build` | Build for production |
+| `npm start` | Start in production mode |
+| `npm run lint` | Lint the codebase |
 | `npm run db:migrate` | Apply database migrations |
-| `npm run db:seed`    | Seed initial data         |
-| `npm run db:studio`  | Open Prisma Studio        |
+| `npm run db:seed` | Seed initial data |
+| `npm run db:studio` | Open Prisma Studio |
 
 ---
 
 ## 🔐 Environment Variables
 
-| Variable                             | Required | Description                      |
+| Variable | Required | Description |
 | ------------------------------------ | -------- | -------------------------------- |
-| `JWT_SECRET`                         | ✅       | Secret key for signing JWTs      |
-| `DATABASE_URL`                       | ✅       | MongoDB connection string        |
-| `APP_ORIGIN`                         | ✅       | Public app URL (for CORS)        |
-| `BACKUP_SIGNING_KEY`                 | ✅       | Key for signing backup files     |
-| `PORT`                               | ❌       | Server port (default: 3000)      |
-| `UPLOAD_DIR`                         | ❌       | Directory for uploaded files     |
-| `UPLOAD_MAX_SIZE_MB`                 | ❌       | Max upload size in MB            |
-| `SENTRY_DSN`                         | ❌       | Sentry monitoring DSN            |
-| `NEXT_PUBLIC_WEBRTC_TURN_URLS`       | ❌       | TURN server URLs for voice calls |
-| `NEXT_PUBLIC_WEBRTC_TURN_USERNAME`   | ❌       | TURN server username             |
-| `NEXT_PUBLIC_WEBRTC_TURN_CREDENTIAL` | ❌       | TURN server credential           |
+| `JWT_SECRET` | ✅ | Secret key for signing JWTs |
+| `DATABASE_URL` | ✅ | MongoDB connection string |
+| `APP_ORIGIN` | ✅ | Public app URL (for CORS) |
+| `BACKUP_SIGNING_KEY` | ✅ | Key for signing backup files |
+| `PORT` | ❌ | Server port (default: 3000) |
+| `UPLOAD_DIR` | ❌ | Directory for uploaded files |
+| `UPLOAD_MAX_SIZE_MB` | ❌ | Max upload size in MB |
+| `SENTRY_DSN` | ❌ | Sentry monitoring DSN |
+| `NEXT_PUBLIC_WEBRTC_TURN_URLS` | ❌ | TURN server URLs for voice calls |
+| `NEXT_PUBLIC_WEBRTC_TURN_USERNAME` | ❌ | TURN server username |
+| `NEXT_PUBLIC_WEBRTC_TURN_CREDENTIAL` | ❌ | TURN server credential |
 
 ---
 
 ## 🏥 Health Checks
 
-| Endpoint          | Description                                                         |
+| Endpoint | Description |
 | ----------------- | ------------------------------------------------------------------- |
-| `GET /api/health` | Overall server status                                               |
-| `GET /api/ready`  | Service readiness check (returns 503 if dependencies are unhealthy) |
+| `GET /api/health` | Overall server status |
+| `GET /api/ready` | Service readiness check (returns 503 if dependencies are unhealthy) |
 
 ---
 
@@ -552,16 +586,16 @@ The superadmin is the only account with access to the **Admin Panel** (`/admin`)
 2. Log in with your superadmin credentials
 3. The panel is **only visible** to the superadmin account
 
-| Section     | Description                               |
+| Section | Description |
 | ----------- | ----------------------------------------- |
-| Users       | Manage users, ban accounts                |
-| Rooms       | View and manage chat rooms                |
-| Messages    | Browse all room messages                  |
-| Calls       | Voice call history and active call status |
-| Storage     | Manage uploaded files                     |
-| Backup      | Create & restore database backups         |
-| Settings    | Toggle user registration on/off           |
-| Sticker/GIF | Upload and manage custom stickers & GIFs  |
+| Users | Manage users, ban accounts |
+| Rooms | View and manage chat rooms |
+| Messages | Browse all room messages |
+| Calls | Voice call history and active call status |
+| Storage | Manage uploaded files |
+| Backup | Create & restore database backups |
+| Settings | Toggle user registration on/off |
+| Sticker/GIF | Upload and manage custom stickers & GIFs |
 
 ### Changing Superadmin Credentials (Web UI)
 
