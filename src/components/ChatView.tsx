@@ -71,6 +71,7 @@ interface ChatViewProps {
   onlineUsers: Set<string>;
   onToggleSidebar: () => void;
   onCloseRoom: () => void;
+  onMessageSent: (roomId: string, text: string | null, fileUrl: string | null) => void;
   onStartCall: (calleeId: string, calleeName: string) => void;
   t: (key: string) => string;
   dir: 'rtl' | 'ltr';
@@ -110,6 +111,7 @@ export default function ChatView({
   onlineUsers,
   onToggleSidebar,
   onCloseRoom,
+  onMessageSent,
   onStartCall,
   t,
   dir,
@@ -428,6 +430,7 @@ export default function ChatView({
         throw new Error('Failed to send message');
       }
       await replaceTempMessage(tempId, data.message as Message);
+      onMessageSent(room.id, trimmedText, null);
     } catch (err) {
       setMessages((prev) => prev.filter((message) => message.id !== tempId));
       setText(trimmedText);
@@ -506,6 +509,7 @@ export default function ChatView({
         const messageJson = await messageRes.json();
         if (messageRes.ok && messageJson.message) {
           void upsertMessage(messageJson.message as Message);
+          onMessageSent(room.id, null, uploadData.fileUrl);
         }
       }
     } catch (err) {
@@ -533,6 +537,7 @@ export default function ChatView({
       const data = await res.json();
       if (res.ok && data.message) {
         void upsertMessage(data.message as Message);
+        onMessageSent(room.id, null, stickerUrl);
       }
 
       setReplyingTo(null);
@@ -557,6 +562,7 @@ export default function ChatView({
       const data = await res.json();
       if (res.ok && data.message) {
         void upsertMessage(data.message as Message);
+        onMessageSent(room.id, null, gifUrl);
       }
 
       setReplyingTo(null);
@@ -643,11 +649,7 @@ export default function ChatView({
             <button
               type="button"
               className="btn btn-ghost btn-icon btn-sm"
-              onClick={() => {
-                if (confirm(t('chat.closeRoomConfirm') || 'Close this chat?')) {
-                  onCloseRoom();
-                }
-              }}
+              onClick={() => onCloseRoom()}
               title={t('chat.closeRoomConfirm')}
             >
               <AppIcon name="close" size={18} />

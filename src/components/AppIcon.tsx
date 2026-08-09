@@ -59,219 +59,375 @@ interface AppIconProps {
 
 function IconPaths({ name }: { name: AppIconName }) {
   switch (name) {
+    // Custom logo — stylized double F
     case 'logo':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25c2.485 2.156 3.75 4.453 3.75 6.75A3.75 3.75 0 018.25 9c0-1.375.5-2.5 1.5-3.75-3 1.5-4.5 4.125-4.5 7.125A6.75 6.75 0 0012 19.125a6.75 6.75 0 006.75-6.75c0-3.384-2.27-6.451-6.75-10.125Z" />;
+      return (
+        <>
+          <path d="M12 2C6.5 2 4 5 4 8c0 2 1 3.5 2.5 4.5L5 20h2l1-4.5h6L15 20h2l-1.5-7.5C17 11.5 18 10 18 8c0-3-2.5-6-6-6Z" />
+          <path d="M8.5 6h7" />
+        </>
+      );
     case 'menu':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />;
+      return (
+        <>
+          <line x1="4" x2="20" y1="12" y2="12" />
+          <line x1="4" x2="20" y1="6" y2="6" />
+          <line x1="4" x2="20" y1="18" y2="18" />
+        </>
+      );
     case 'channel':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h10.5m0 0L11.25 9m3 3-3 3m5.25-6h3.75m-3.75 6h3.75" />;
+      return (
+        <>
+          <path d="M3.5 12h17" />
+          <path d="M17 8l3.5 4-3.5 4" />
+        </>
+      );
     case 'group':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 8.25a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.25a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5a4.5 4.5 0 019 0m1.5 0a4.5 4.5 0 019 0" />
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </>
       );
     case 'settings':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6h15M4.5 12h15m-16.5 6h15" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm10.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Zm-7.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0Z" />
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
         </>
       );
     case 'logout':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.625A2.625 2.625 0 0013.125 3h-6.75A2.625 2.625 0 003.75 5.625V19.5a2.625 2.625 0 002.625 2.625h6.75a2.625 2.625 0 002.625-2.625V15m-5.25-3.75h7.5" />;
+      return (
+        <>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" x2="9" y1="12" y2="12" />
+        </>
+      );
     case 'close':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />;
+      return (
+        <>
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </>
+      );
     case 'phone':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 4.5A2.25 2.25 0 014.5 2.25h2.373c.966 0 1.785.694 1.969 1.642l.547 2.734a1.875 1.875 0 01-.529 1.767l-1.038 1.038a11.255 11.255 0 005.303 5.303l1.038-1.038a1.875 1.875 0 011.767-.529l2.734.547A2.006 2.006 0 0121.75 17.127V19.5a2.25 2.25 0 01-2.25 2.25h-.75C9.059 21.75 2.25 14.941 2.25 6.75V4.5Z" />;
+      return (
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+      );
     case 'micOn':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75a2.25 2.25 0 00-2.25 2.25v6a2.25 2.25 0 004.5 0V6A2.25 2.25 0 0012 3.75Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 10.5v1.5a5.25 5.25 0 0010.5 0v-1.5M12 17.25V21" />
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <line x1="12" x2="12" y1="19" y2="22" />
         </>
       );
     case 'micOff':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3.75a2.25 2.25 0 00-2.25 2.25v2.25m0 3.75a2.25 2.25 0 004.5 0V9.75" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 10.5v1.5a5.25 5.25 0 0010.5 0v-1.5M12 17.25V21M4.5 4.5l15 15" />
+          <line x1="2" x2="22" y1="2" y2="22" />
+          <path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2" />
+          <path d="M5 10v2a7 7 0 0 0 12 5.29" />
+          <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33" />
+          <path d="M9 9v3a3 3 0 0 0 5.12 2.12" />
+          <line x1="12" x2="12" y1="19" y2="22" />
         </>
       );
     case 'chat':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12c0-4.28 3.47-7.75 7.75-7.75h4c4.28 0 7.75 3.47 7.75 7.75s-3.47 7.75-7.75 7.75H9.75l-4.5 2.25.75-3.75A7.74 7.74 0 012.25 12Z" />;
+      return (
+        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+      );
     case 'download':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v10.5m0 0L8.25 9.75M12 13.5l3.75-3.75M4.5 17.25v-2.25c0-1.657 1.343-3 3-3h1" />;
+      return (
+        <>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" x2="12" y1="15" y2="3" />
+        </>
+      );
     case 'paperclip':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739 10.682 20.432a4.5 4.5 0 01-6.364-6.364l8.047-8.047a3 3 0 114.243 4.243L8.56 18.312a1.5 1.5 0 01-2.121-2.122l7.424-7.424" />;
+      return (
+        <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+      );
     case 'image':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5h16.5a1.5 1.5 0 011.5 1.5v12a1.5 1.5 0 01-1.5 1.5H3.75a1.5 1.5 0 01-1.5-1.5V6a1.5 1.5 0 011.5-1.5Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9a1.5 1.5 0 100-3 1.5 1.5 0 000 3Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="m21.75 16.5-4.41-4.41a1.5 1.5 0 00-2.12 0l-1.84 1.84-1.59-1.59a1.5 1.5 0 00-2.12 0L2.25 19.5" />
+          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+          <circle cx="9" cy="9" r="2" />
+          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
         </>
       );
     case 'music':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18.75a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0Zm10.5-2.25a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18.75V6.75l10.5-2.25v12" />
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
         </>
       );
     case 'video':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5A2.25 2.25 0 016 5.25h8.25a2.25 2.25 0 012.25 2.25v1.324l3.75-2.143v10.648l-3.75-2.143V16.5a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25v-9Z" />;
+      return (
+        <>
+          <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
+          <rect x="2" y="6" width="14" height="12" rx="2" />
+        </>
+      );
     case 'emoji':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.182 15.182a4.5 4.5 0 01-6.364 0" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0Z" />
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <line x1="9" x2="9.01" y1="9" y2="9" />
+          <line x1="15" x2="15.01" y1="9" y2="9" />
         </>
       );
     case 'send':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12 20.25 3l-5.25 18-3.75-7.5-9-1.5Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 13.5 20.25 3" />
+          <path d="m22 2-7 20-4-9-9-4Z" />
+          <path d="M22 2 11 13" />
         </>
       );
     case 'camera':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 7.5A2.25 2.25 0 014.5 5.25h2.379a2.25 2.25 0 001.59-.659l.66-.66a2.25 2.25 0 011.59-.659h2.562a2.25 2.25 0 011.59.659l.66.66a2.25 2.25 0 001.59.659H19.5a2.25 2.25 0 012.25 2.25v9a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25v-9Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5Z" />
+          <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+          <circle cx="12" cy="13" r="3" />
         </>
       );
     case 'trash':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9 14.394 18m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166M4.772 5.79A48.108 48.108 0 013.75 5.956m16.5 0a48.11 48.11 0 00-3.478-.397m-12.272 0c1.052-.127 2.113-.233 3.184-.318m0 0a45.003 45.003 0 016.632 0m-6.632 0v-.916c0-1.18.91-2.164 2.09-2.201a51.964 51.964 0 014.82 0c1.18.037 2.09 1.022 2.09 2.201v.916m-6.632 0a48.667 48.667 0 00-3.122.263m9.754-.263c1.055.085 2.112.191 3.167.318m-10.5 14.25h9a2.25 2.25 0 002.244-2.077l.5-9A2.25 2.25 0 0018.75 6H5.25a2.25 2.25 0 00-2.244 2.423l.5 9A2.25 2.25 0 005.75 19.5Z" />;
+      return (
+        <>
+          <path d="M3 6h18" />
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          <line x1="10" x2="10" y1="11" y2="17" />
+          <line x1="14" x2="14" y1="11" y2="17" />
+        </>
+      );
     case 'lock':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V7.875a4.5 4.5 0 10-9 0V10.5m-.75 0h10.5A2.25 2.25 0 0119.5 12.75v6A2.25 2.25 0 0117.25 21h-10.5A2.25 2.25 0 014.5 18.75v-6A2.25 2.25 0 016.75 10.5Z" />;
+      return (
+        <>
+          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </>
+      );
     case 'save':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 3.75h11.379c.597 0 1.169.237 1.591.659l2.871 2.871c.422.422.659.994.659 1.591V19.5a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 19.5V6A2.25 2.25 0 014.5 3.75Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75v4.5h6v-4.5m-5.25 10.5h7.5" />
+          <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+          <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" />
+          <path d="M7 3v4a1 1 0 0 0 1 1h7" />
         </>
       );
     case 'arrowLeft':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />;
+      return (
+        <>
+          <path d="m12 19-7-7 7-7" />
+          <path d="M19 12H5" />
+        </>
+      );
     case 'dashboard':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 19.5h16.5" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 16.5V9.75m5.25 6.75V4.5m5.25 12V12" />
+          <rect width="7" height="9" x="3" y="3" rx="1" />
+          <rect width="7" height="5" x="14" y="3" rx="1" />
+          <rect width="7" height="9" x="14" y="12" rx="1" />
+          <rect width="7" height="5" x="3" y="16" rx="1" />
         </>
       );
     case 'user':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 20.25a7.5 7.5 0 0115 0" />
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </>
       );
     case 'messages':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9A2.25 2.25 0 0119.5 18.75H4.5A2.25 2.25 0 012.25 16.5v-9A2.25 2.25 0 014.5 5.25h15A2.25 2.25 0 0121.75 7.5ZM3 7.5l9 6 9-6" />;
+      return (
+        <>
+          <path d="M14 9a2 2 0 0 0-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2v5Z" />
+          <path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 0-2 2" />
+        </>
+      );
     case 'storage':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5c0 1.864 3.694 3.375 8.25 3.375s8.25-1.511 8.25-3.375-3.694-3.375-8.25-3.375-8.25 1.511-8.25 3.375Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12c0 1.864 3.694 3.375 8.25 3.375s8.25-1.511 8.25-3.375M3.75 16.5c0 1.864 3.694 3.375 8.25 3.375s8.25-1.511 8.25-3.375" />
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+          <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
         </>
       );
     case 'backup':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5h16.5v4.5H3.75V4.5Zm1.5 4.5h13.5v9.75a1.5 1.5 0 01-1.5 1.5H6.75a1.5 1.5 0 01-1.5-1.5V9Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 13.5h4.5" />
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" x2="12" y1="3" y2="15" />
         </>
       );
     case 'paint':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="m14.25 4.5 5.25 5.25M6 12l8.25-8.25a2.121 2.121 0 113 3L9 15l-3 1 1-4Zm.75 4.5c-1.5 0-3 1.125-3 2.625 0 1.125.75 2.25 3 2.25s3-1.125 3-2.25c0-1.5-1.5-2.625-3-2.625Z" />;
+      return (
+        <>
+          <path d="m14.622 17.897-10.68-2.913" />
+          <path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.707.707a1 1 0 0 1-1.414 1.414l-.707-.707a.5.5 0 0 0-.707 0l-2.829 2.828" />
+          <path d="M3.5 12.5h2" />
+          <path d="M11.5 7.5h2" />
+          <path d="M14 14.5h2" />
+          <path d="M7.5 11.5h2" />
+        </>
+      );
     case 'film':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5h16.5A1.5 1.5 0 0121.75 6v12a1.5 1.5 0 01-1.5 1.5H3.75A1.5 1.5 0 012.25 18V6a1.5 1.5 0 011.5-1.5Z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 4.5v15m9-15v15M3.75 9H7.5m-3.75 6H7.5m9-6h3.75m-3.75 6h3.75" />
+          <rect width="18" height="18" x="3" y="3" rx="2" />
+          <path d="M7 3v18" />
+          <path d="M3 7.5h4" />
+          <path d="M3 12h18" />
+          <path d="M3 16.5h4" />
+          <path d="M17 3v18" />
+          <path d="M17 7.5h4" />
+          <path d="M17 16.5h4" />
         </>
       );
     case 'crown':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 18.75h16.5l-1.5-9-4.5 3-2.25-5.25-2.25 5.25-4.5-3-1.5 9Z" />;
+      return (
+        <>
+          <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7Z" />
+          <path d="M3 20h18" />
+        </>
+      );
     case 'notifications':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25A3.75 3.75 0 0015 17.25H9A3.75 3.75 0 0012 20.25z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 4.5A4.5 4.5 0 0118 9v6a4.5 4.5 0 01-9 0V9a4.5 4.5 0 016-4.09V4.5z" />
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </>
       );
     case 'bell':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-3m-5.25-3a5.25 5.25 0 1110.5 0c0 2.1-.9 3.99-2.34 5.25H12m0 4.5a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />;
+      return (
+        <>
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </>
+      );
     case 'bellOff':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-3m-5.25-3a5.25 5.25 0 1110.5 0c0 2.1-.9 3.99-2.34 5.25H9.75m0 4.5a2.25 2.25 0 104.5 0m-4.5 0V18" />;
+      return (
+        <>
+          <path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" />
+          <path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          <line x1="2" x2="22" y1="2" y2="22" />
+        </>
+      );
     case 'shield':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15l3.75-2.25m.75 3.75A9 9 0 015.25 6.75 9 9 0 0112 3a9 9 0 016.75 14.25z" />;
+      return (
+        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+      );
     case 'key':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75A3.75 3.75 0 1012 8.25a3.75 3.75 0 000 7.5z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9.75L17.25 11.25" />
+          <path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" />
+          <path d="m21 2-9.6 9.6" />
+          <circle cx="7.5" cy="15.5" r="5.5" />
         </>
       );
     case 'eye':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5c-2.625 0-5.25 1.125-7.125 2.7-2 1.625-3.125 3.7-3.125 5.85s1.125 4.225 3.125 5.85c1.875 1.575 4.5 2.7 7.125 2.7s5.25-1.125 7.125-2.7c2-1.625 3.125-3.7 3.125-5.85s-1.125-4.225-3.125-5.85C17.25 5.625 14.625 4.5 12 4.5z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a3 3 0 100-6 3 3 0 000 6z" />
+          <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+          <circle cx="12" cy="12" r="3" />
         </>
       );
     case 'eyeOff':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 2.25l19.5 19.5M9.75 9.75a3 3 0 114.246 4.246M12 4.5c-2.625 0-5.25 1.125-7.125 2.7-2 1.625-3.125 3.7-3.125 5.85s1.125 4.225 3.125 5.85c1.875 1.575 4.5 2.7 7.125 2.7s5.25-1.125 7.125-2.7c2-1.625 3.125-3.7 3.125-5.85s-1.125-4.225-3.125-5.85c-1.875-1.575-4.5-2.7-7.125-2.7" />;
+      return (
+        <>
+          <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+          <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+          <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+          <path d="m2 2 20 20" />
+        </>
+      );
     case 'volume':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m3-6-3 3-3-3" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 8.25h3a2.25 2.25 0 011.59.66l1.5 1.5a2.25 2.25 0 001.59.66h3.25" />
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
         </>
       );
     case 'volumeOff':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m3-6-3 3-3-3M2.25 2.25l19.5 19.5" />;
+      return (
+        <>
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+          <line x1="22" x2="16" y1="9" y2="15" />
+          <line x1="16" x2="22" y1="9" y2="15" />
+        </>
+      );
     case 'device':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75h19.5v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 17.25h7.5" />
+          <rect width="20" height="14" x="2" y="3" rx="2" />
+          <line x1="8" x2="16" y1="21" y2="21" />
+          <line x1="12" x2="12" y1="17" y2="21" />
         </>
       );
     case 'devices':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6h19.5v2.25H2.25zM2.25 11.25h19.5v8.25a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 17.25z" />
+          <rect width="14" height="12" x="5" y="8" rx="2" />
+          <path d="M19 3H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z" />
+          <path d="M9 17h6" />
         </>
       );
     case 'info':
       return (
         <>
-          <circle cx="12" cy="12" r="9.75" fill="none" stroke="currentColor" strokeWidth="1.5" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75v-4.5" />
-          <circle cx="12" cy="9.75" r="0.75" fill="currentColor" />
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4" />
+          <path d="M12 8h.01" />
         </>
       );
     case 'help':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 14.65A5.25 5.25 0 0112 9a5.25 5.25 0 011.5 3.75v1.5a.75.75 0 101.5 0v-1.5A3.75 3.75 0 0012 7.5a3.75 3.75 0 00-3.19 5.44.75.75 0 01-1.06 1.71zM12 16.5h.008v.008H12z" />;
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </>
+      );
     case 'privacy':
       return (
         <>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.75A3.75 3.75 0 1012 8.25a3.75 3.75 0 000 7.5z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 7.5h8.25a2.25 2.25 0 012.25 2.25v5.25a2.25 2.25 0 01-2.25 2.25H9.75" />
+          <path d="M19 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+          <path d="m9 12 2 2 4-4" />
         </>
       );
     case 'language':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5M12 4.5L4.5 12l7.5 7.5L19.5 12 12 4.5z" />;
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+          <path d="M2 12h20" />
+        </>
+      );
     case 'theme':
-      return <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25a9.75 9.75 0 019.75 9.75c0 1.83-.52 3.55-1.4 5.04l-1.35 2.25a.75.75 0 01-1.19-.56V13.5a1.5 1.5 0 00-1.5-1.5H9.75a1.5 1.5 0 00-1.5 1.5v5.04a.75.75 0 01-1.19.56l-1.35-2.25A9.72 9.72 0 012.25 12c0-1.83.52-3.55 1.4-5.04l1.35-2.25A.75.75 0 015.4 4.08L12 3.75l5.25.33" />;
+      return (
+        <>
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2" />
+          <path d="M12 20v2" />
+          <path d="m4.93 4.93 1.41 1.41" />
+          <path d="m17.66 17.66 1.41 1.41" />
+          <path d="M2 12h2" />
+          <path d="M20 12h2" />
+          <path d="m6.34 17.66-1.41 1.41" />
+          <path d="m19.07 4.93-1.41 1.41" />
+        </>
+      );
     default:
       return null;
   }

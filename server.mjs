@@ -83,7 +83,7 @@ function applySecurityHeaders(res) {
       "img-src 'self' data: blob:; media-src 'self' blob:; " +
       "font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com; " +
-      "connect-src 'self' ws: wss: https://cloudflareinsights.com stun: turn: turns:",
+      "connect-src 'self' ws: wss: http: https: stun: turn: turns: https://cloudflareinsights.com"
   );
 
   if (process.env.NODE_ENV === "production") {

@@ -284,6 +284,8 @@ export default function Sidebar({
               return (
                 <motion.div
                   key={room.id}
+                  layout
+                  layoutId={room.id}
                   variants={staggerItem}
                   onClick={() => onSelectRoom(room.id)}
                   className={`sidebar-room${isActive ? ' active' : ''}`}
@@ -363,9 +365,7 @@ export default function Sidebar({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(t('chat.closeRoomConfirm') || 'Close this chat?')) {
-                        onCloseRoom(room.id);
-                      }
+                      onCloseRoom(room.id);
                     }}
                     className="btn btn-ghost btn-icon btn-sm"
                     style={{

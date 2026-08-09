@@ -8,6 +8,9 @@ import Sidebar from '@/components/Sidebar';
 import ChatView from '@/components/ChatView';
 import VoiceCall from '@/components/VoiceCall';
 import Image from 'next/image';
+import { AnimatePresence, motion } from 'motion/react';
+import { spring } from '@/lib/animations';
+import { applyNoiseSuppression, cleanupNoiseSuppression } from '@/lib/noiseSuppression';
 
 interface Room {
   id: string;
@@ -97,26 +100,24 @@ function getConfiguredIceServers(): RTCIceServer[] {
   if (servers.length > 0) {
     return servers;
   }
-  const stunUrls = (process.env.NEXT_PUBLIC_WEBRTC_STUN_URLS || 'stun:stun.l.google.com:19302')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-  if (stunUrls.length > 0) {
-    servers.push({ urls: stunUrls });
-  }
-  const turnUrls = (process.env.NEXT_PUBLIC_WEBRTC_TURN_URLS || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-  const turnUsername = process.env.NEXT_PUBLIC_WEBRTC_TURN_USERNAME;
-  const turnCredential = process.env.NEXT_PUBLIC_WEBRTC_TURN_CREDENTIAL;
-  if (turnUrls.length > 0 && turnUsername && turnCredential) {
-    servers.push({
-      urls: turnUrls,
-      username: turnUsername,
-      credential: turnCredential,
-    });
-  }
+  // Default: Google STUN + free Open Relay TURN (TCP + TLS fallback)
+  servers.push({ urls: 'stun:stun.l.google.com:19302' });
+  servers.push({ urls: 'stun:stun1.l.google.com:19302' });
+  servers.push({
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  });
+  servers.push({
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  });
+  servers.push({
+    urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  });
   return servers;
 }
 
@@ -179,9 +180,15 @@ export default function ChatPage() {
   }, [callState]);
 
   const cleanupCallMedia = useCallback(() => {
+    console.log('[WebRTC] Cleaning up call media');
     if (peerConnectionRef.current) {
       peerConnectionRef.current.onicecandidate = null;
       peerConnectionRef.current.ontrack = null;
+      peerConnectionRef.current.onconnectionstatechange = null;
+      peerConnectionRef.current.oniceconnectionstatechange = null;
+      peerConnectionRef.current.onicecandidateerror = null;
+      peerConnectionRef.current.onicegatheringstatechange = null;
+      peerConnectionRef.current.onnegotiationneeded = null;
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
@@ -191,11 +198,9 @@ export default function ChatPage() {
       }
       localStreamRef.current = null;
     }
+    cleanupNoiseSuppression();
     if (remoteStreamRef.current) {
-      for (const track of remoteStreamRef.current.getTracks()) {
-        track.stop();
-      }
-      remoteStreamRef.current = null;
+      remoteStreamRef.current = new MediaStream();
     }
     if (remoteAudioRef.current) {
       remoteAudioRef.current.srcObject = null;
@@ -216,8 +221,9 @@ export default function ChatPage() {
     try {
       await audioElement.play();
       setAudioPlaybackBlocked(false);
+      console.log('[WebRTC] Remote audio playing');
     } catch (error) {
-      console.error('Remote audio playback blocked:', error);
+      console.warn('[WebRTC] Remote audio autoplay blocked:', error);
       setAudioPlaybackBlocked(true);
     }
   }, []);
@@ -229,20 +235,34 @@ export default function ChatPage() {
     if (!navigator.mediaDevices?.getUserMedia) {
       throw new Error('Media devices are not available');
     }
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    localStreamRef.current = stream;
+    const rawStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    // Apply RNNoise noise suppression
+    try {
+      const processedStream = await applyNoiseSuppression(rawStream);
+      console.log('[Call] Noise suppression active');
+      localStreamRef.current = processedStream;
+    } catch (err) {
+      console.warn('[Call] Noise suppression unavailable, using raw audio:', err);
+      localStreamRef.current = rawStream;
+    }
     setIsCallMuted(false);
-    return stream;
+    return localStreamRef.current;
   }, []);
 
   const flushPendingIceCandidates = useCallback(async (pc: RTCPeerConnection) => {
     if (!pc.remoteDescription) {
+      console.warn('[WebRTC] Cannot flush ICE candidates — no remote description');
       return;
     }
     const queued = [...pendingIceCandidatesRef.current];
     pendingIceCandidatesRef.current = [];
+    console.log('[WebRTC] Flushing', queued.length, 'pending ICE candidates');
     for (const candidate of queued) {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (error) {
+        console.warn('[WebRTC] Failed to add buffered ICE candidate:', error);
+      }
     }
   }, []);
 
@@ -252,32 +272,49 @@ export default function ChatPage() {
     }
     const pc = new RTCPeerConnection({
       iceServers: configuredIceServers,
+      iceTransportPolicy: 'all',
+      bundlePolicy: 'max-bundle',
     });
     activePeerUserIdRef.current = targetUserId;
     pc.onconnectionstatechange = () => {
       console.log('[WebRTC] connectionState:', pc.connectionState);
-      if (pc.connectionState !== 'failed' || connectionFailureHandledRef.current) {
-        return;
+      if (pc.connectionState === 'failed' && !connectionFailureHandledRef.current) {
+        connectionFailureHandledRef.current = true;
+        const reason = turnServerConfigured
+          ? 'Call connection failed on current network.'
+          : 'Call connection failed. Network may be blocking peer-to-peer connections.';
+        alert(reason);
       }
-      connectionFailureHandledRef.current = true;
-      const reason = turnServerConfigured
-        ? 'Call connection failed on current network.'
-        : 'Call connection failed. Configure TURN server credentials in NEXT_PUBLIC_WEBRTC_TURN_URLS, NEXT_PUBLIC_WEBRTC_TURN_USERNAME, and NEXT_PUBLIC_WEBRTC_TURN_CREDENTIAL.';
-      alert(reason);
     };
     pc.onicecandidate = (event) => {
       if (!event.candidate || !activePeerUserIdRef.current) {
         return;
       }
-      console.log('[WebRTC] Sending ICE candidate:', event.candidate.type, event.candidate.protocol);
+      console.log('[WebRTC] ICE candidate:', event.candidate.type, event.candidate.protocol);
       const socket = getSocket();
       socket.emit('call:signal', {
         targetUserId: activePeerUserIdRef.current,
         signal: { type: 'ice-candidate', candidate: event.candidate.toJSON() },
       });
     };
+    pc.onicecandidateerror = (event) => {
+      console.warn('[WebRTC] ICE candidate error:', event.errorCode, event.errorText);
+    };
+    pc.onicegatheringstatechange = () => {
+      console.log('[WebRTC] iceGatheringState:', pc.iceGatheringState);
+    };
+    pc.oniceconnectionstatechange = () => {
+      console.log('[WebRTC] iceConnectionState:', pc.iceConnectionState);
+      if (pc.iceConnectionState === 'failed') {
+        console.warn('[WebRTC] ICE connection failed, restarting...');
+        pc.restartIce();
+      }
+      if (pc.iceConnectionState === 'disconnected') {
+        console.warn('[WebRTC] ICE disconnected');
+      }
+    };
     pc.ontrack = (event) => {
-      console.log('[WebRTC] Remote track received:', event.track.kind);
+      console.log('[WebRTC] Remote track:', event.track.kind, 'streams:', event.streams?.length);
       if (event.streams && event.streams[0]) {
         remoteStreamRef.current = event.streams[0];
       } else {
@@ -286,36 +323,53 @@ export default function ChatPage() {
         }
         remoteStreamRef.current.addTrack(event.track);
       }
-      if (remoteAudioRef.current && remoteStreamRef.current && remoteAudioRef.current.srcObject !== remoteStreamRef.current) {
-        remoteAudioRef.current.srcObject = remoteStreamRef.current;
+      if (remoteAudioRef.current && remoteStreamRef.current) {
+        if (remoteAudioRef.current.srcObject !== remoteStreamRef.current) {
+          remoteAudioRef.current.srcObject = remoteStreamRef.current;
+          console.log('[WebRTC] Set remote audio srcObject');
+        }
       }
       void tryPlayRemoteAudio();
     };
-    pc.oniceconnectionstatechange = () => {
-      console.log('[WebRTC] iceConnectionState:', pc.iceConnectionState);
-      if (pc.iceConnectionState === 'failed') {
-        pc.restartIce();
-      }
+    pc.onnegotiationneeded = () => {
+      console.log('[WebRTC] negotiationneeded — renegotiation required');
     };
     peerConnectionRef.current = pc;
     return pc;
   }, [tryPlayRemoteAudio]);
 
   const ensureAudioTrackBound = useCallback((pc: RTCPeerConnection, stream: MediaStream) => {
-    const hasAudioSender = pc.getSenders().some((sender) => sender.track?.kind === 'audio');
-    if (hasAudioSender) {
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      console.warn('[WebRTC] No audio tracks in stream');
       return;
     }
-    for (const track of stream.getAudioTracks()) {
+    const existingSenders = pc.getSenders().filter((s) => s.track?.kind === 'audio');
+    if (existingSenders.length > 0) {
+      // Re-bind if track ended or different
+      const currentTrack = existingSenders[0].track;
+      const freshTrack = audioTracks[0];
+      if (currentTrack && currentTrack.readyState === 'ended' && freshTrack) {
+        console.log('[WebRTC] Replacing ended audio track');
+        existingSenders[0].replaceTrack(freshTrack);
+      }
+      return;
+    }
+    for (const track of audioTracks) {
+      console.log('[WebRTC] Adding audio track:', track.label);
       pc.addTrack(track, stream);
     }
   }, []);
 
   const setupActiveCallMedia = useCallback(async (targetUserId: string, shouldCreateOffer: boolean, logId?: string) => {
+    console.log('[WebRTC] setupActiveCallMedia:', { targetUserId, shouldCreateOffer, logId });
     const stream = await ensureLocalStream();
+    console.log('[WebRTC] Local stream tracks:', stream.getTracks().map((t) => `${t.kind}:${t.label}`).join(', '));
     const pc = ensurePeerConnection(targetUserId);
     ensureAudioTrackBound(pc, stream);
+    console.log('[WebRTC] PeerConnection senders:', pc.getSenders().map((s) => `${s.track?.kind}:${s.track?.label}`).join(', '));
     if (shouldCreateOffer && logId && offerSentLogIdRef.current !== logId) {
+      console.log('[WebRTC] Creating and sending offer');
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const socket = getSocket();
@@ -324,23 +378,35 @@ export default function ChatPage() {
         signal: { type: 'offer', sdp: offer },
       });
       offerSentLogIdRef.current = logId;
+      console.log('[WebRTC] Offer sent');
+    } else {
+      console.log('[WebRTC] Not creating offer (callee or already sent)');
     }
   }, [ensureAudioTrackBound, ensureLocalStream, ensurePeerConnection]);
 
   const handleCallSignal = useCallback(async ({ fromUserId, signal }: CallSignalPayload) => {
     const currentCall = callStateRef.current;
     if (currentCall.status === 'idle') {
+      console.warn('[WebRTC] Ignoring signal — call is idle');
       return;
     }
+    console.log('[WebRTC] Received signal:', signal.type, 'from', fromUserId);
     try {
       const stream = await ensureLocalStream();
       const pc = ensurePeerConnection(fromUserId);
-      ensureAudioTrackBound(pc, stream);
       if (signal.type === 'offer') {
+        // CRITICAL: setRemoteDescription BEFORE adding tracks
+        // Adding tracks first causes the SDP answer to miss audio media lines
+        console.log('[WebRTC] Setting remote description (offer)');
         await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+        console.log('[WebRTC] Flushing', pendingIceCandidatesRef.current.length, 'pending ICE candidates');
         await flushPendingIceCandidates(pc);
+        // Now add tracks — they'll be included in the answer's SDP
+        ensureAudioTrackBound(pc, stream);
+        console.log('[WebRTC] Creating answer');
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        console.log('[WebRTC] Sending answer');
         const socket = getSocket();
         socket.emit('call:signal', {
           targetUserId: fromUserId,
@@ -349,17 +415,24 @@ export default function ChatPage() {
         return;
       }
       if (signal.type === 'answer') {
+        ensureAudioTrackBound(pc, stream);
+        console.log('[WebRTC] Setting remote description (answer)');
         await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+        console.log('[WebRTC] Flushing', pendingIceCandidatesRef.current.length, 'pending ICE candidates');
         await flushPendingIceCandidates(pc);
         return;
       }
-      if (pc.remoteDescription) {
-        await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-      } else {
-        pendingIceCandidatesRef.current.push(signal.candidate);
+      if (signal.type === 'ice-candidate') {
+        if (pc.remoteDescription) {
+          console.log('[WebRTC] Adding ICE candidate directly');
+          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+        } else {
+          console.log('[WebRTC] Buffering ICE candidate (no remote description yet)');
+          pendingIceCandidatesRef.current.push(signal.candidate);
+        }
       }
     } catch (error) {
-      console.error('Failed to handle call signal:', error);
+      console.error('[WebRTC] Failed to handle signal:', error);
     }
   }, [ensureAudioTrackBound, ensureLocalStream, ensurePeerConnection, flushPendingIceCandidates]);
 
@@ -392,14 +465,19 @@ export default function ChatPage() {
     return () => window.removeEventListener('resize', updateViewport);
   }, []);
 
+  const hasLoadedRoomsRef = useRef(false);
+
   // Fetch rooms
   const fetchRooms = useCallback(async () => {
-    setRoomsLoading(true);
+    if (!hasLoadedRoomsRef.current) {
+      setRoomsLoading(true);
+    }
     try {
       const res = await fetch('/api/rooms');
       const data = await res.json();
       if (data.rooms) {
         setRooms(data.rooms);
+        hasLoadedRoomsRef.current = true;
         // Hydrate unread counts from server
         const counts: Record<string, number> = {};
         for (const room of data.rooms) {
@@ -763,12 +841,15 @@ export default function ChatPage() {
           onSelectRoom={selectRoom}
           onRoomsChange={fetchRooms}
           onCloseRoom={async (roomId: string) => {
+            // Optimistic: remove from local state immediately
+            setRooms((prev) => prev.filter((r) => r.id !== roomId));
+            if (activeRoomId === roomId) setActiveRoomId(null);
             try {
               await fetch(`/api/rooms/${roomId}/members`, { method: 'DELETE' });
-              if (activeRoomId === roomId) setActiveRoomId(null);
-              void fetchRooms();
             } catch (err) {
               console.error('Failed to close room:', err);
+              // Re-fetch on failure
+              void fetchRooms();
             }
           }}
           onLogout={logout}
@@ -789,10 +870,29 @@ export default function ChatPage() {
             onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
             onCloseRoom={() => {
               if (activeRoomId) {
+                setRooms((prev) => prev.filter((r) => r.id !== activeRoomId));
                 fetch(`/api/rooms/${activeRoomId}/members`, { method: 'DELETE' }).catch(() => {});
                 setActiveRoomId(null);
-                void fetchRooms();
               }
+            }}
+            onMessageSent={(roomId, text, fileUrl) => {
+              setRooms((prev) => {
+                const idx = prev.findIndex((r) => r.id === roomId);
+                if (idx < 0) return prev;
+                const room = prev[idx];
+                const username = user.username;
+                const previewText = text || (fileUrl ? fileUrl.split('/').pop() || '📎' : null);
+                const now = new Date().toISOString();
+                const updated: Room = {
+                  ...room,
+                  messages: [{ text: previewText, user: { username }, createdAt: now }],
+                  _count: room._count,
+                };
+                const next = [...prev];
+                next.splice(idx, 1);
+                next.unshift(updated);
+                return next;
+              });
             }}
             onStartCall={startCall}
             t={t}
