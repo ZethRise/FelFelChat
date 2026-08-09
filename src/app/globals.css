@@ -944,7 +944,7 @@ tr:hover td { background: var(--bg-hover); }
   }
 
   .sidebar-search-wrap {
-    padding: 22px 16px 0;
+    padding: 26px 16px 0;
     background: var(--bg-secondary);
     flex-shrink: 0;
   }
@@ -968,6 +968,7 @@ tr:hover td { background: var(--bg-hover); }
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
     flex-shrink: 0;
+    margin-bottom: 2px;
   }
 
   .mobile-folder-tabs::-webkit-scrollbar {

@@ -194,7 +194,7 @@ export default function Sidebar({
       )}
 
       {/* Search + New Chat (compact on mobile, row on desktop) */}
-      <div style={{ padding: isMobile ? '0 12px 8px' : '0 14px 8px' }}>
+      <div style={{ padding: isMobile ? '0 12px 16px' : '0 14px 8px' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
             <input
