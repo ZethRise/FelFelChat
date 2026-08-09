@@ -944,7 +944,7 @@ tr:hover td { background: var(--bg-hover); }
   }
 
   .sidebar-search-wrap {
-    padding: 26px 16px 0;
+    padding: 35px 16px 0;
     background: var(--bg-secondary);
     flex-shrink: 0;
   }
