@@ -140,6 +140,8 @@ export default function ChatPage() {
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [activeFolder, setActiveFolder] = useState<'all' | 'private' | 'group'>('all');
   const [roomsLoading, setRoomsLoading] = useState(true);
   const [unreadByRoom, setUnreadByRoom] = useState<Record<string, number>>({});
   const [callState, setCallState] = useState<CallState>({ status: 'idle' });
@@ -787,6 +789,14 @@ export default function ChatPage() {
     return other?.user.displayName || other?.user.username || room.name;
   };
 
+  // Filter rooms by folder
+  const filteredRooms = rooms.filter((room) => {
+    if (activeFolder === 'all') return true;
+    if (activeFolder === 'private') return room.type === 'PRIVATE';
+    if (activeFolder === 'group') return room.type === 'GROUP' || room.type === 'CHANNEL';
+    return true;
+  });
+
   const selectRoom = (roomId: string) => {
     setActiveRoomId(roomId);
     setUnreadByRoom((prev) => {
@@ -806,34 +816,68 @@ export default function ChatPage() {
 
   return (
     <div className="app-shell" style={{ direction: dir }}>
-      {/* Backdrop overlay for mobile */}
-      {sidebarOpen && isMobile && (
+      {/* Backdrop for nav panel */}
+      {navOpen && isMobile && (
         <div
-          onClick={closeSidebarOnMobile}
+          onClick={() => setNavOpen(false)}
           className="app-backdrop"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Navigation Panel (Hamburger Menu) */}
+      {isMobile && (
+        <div
+          className="mobile-nav-panel"
+          data-open={navOpen}
+        >
+          <div className="mobile-nav-header">
+            <div className="mobile-nav-user">
+              <div
+                className="avatar"
+                style={{ background: user.avatarUrl ? 'transparent' : '#3b82f6' }}
+              >
+                {user.displayName?.charAt(0)?.toUpperCase() || user.username.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15 }}>{user.displayName || user.username}</div>
+                <div style={{ fontSize: 13, color: 'var(--fg-muted)' }}>@{user.username}</div>
+              </div>
+            </div>
+          </div>
+          <button className="mobile-nav-item" onClick={() => { setNavOpen(false); }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            {t('settings.title') || 'Profile'}
+          </button>
+          <button className="mobile-nav-item" onClick={() => { setNavOpen(false); window.location.href = '/settings'; }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            {t('settings.appearance') || 'Settings'}
+          </button>
+          {user.isSuperAdmin && (
+            <button className="mobile-nav-item" onClick={() => { setNavOpen(false); window.location.href = '/admin'; }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              {t('admin.panel') || 'Admin'}
+            </button>
+          )}
+          <div className="mobile-nav-divider" />
+          <button className="mobile-nav-item" onClick={() => { setNavOpen(false); logout(); }} style={{ color: 'var(--danger)' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            {t('auth.logout') || 'Logout'}
+          </button>
+        </div>
+      )}
+
+      {/* Sidebar = Chat List (full screen on mobile) */}
       <div
         className="app-sidebar-shell"
-        style={{
-          width: sidebarOpen || !isMobile ? 'var(--sidebar-width)' : 0,
-          minWidth: sidebarOpen || !isMobile ? 'var(--sidebar-width)' : 0,
-          position: isMobile ? 'fixed' : 'relative',
-          top: 0,
-          left: dir === 'rtl' ? 'auto' : 0,
-          right: dir === 'rtl' ? 0 : 'auto',
-          height: '100vh',
-          zIndex: 99,
-          transform: isMobile && !sidebarOpen 
-            ? (dir === 'rtl' ? 'translateX(100%)' : 'translateX(-100%)') 
-            : 'translateX(0)',
+        data-has-room={isMobile ? !!activeRoomId : undefined}
+        style={isMobile ? {} : {
+          width: 'var(--sidebar-width)',
+          minWidth: 'var(--sidebar-width)',
         }}
       >
         <Sidebar
           user={user}
-          rooms={rooms}
+          rooms={isMobile ? filteredRooms : rooms}
           roomsLoading={roomsLoading}
           unreadByRoom={unreadByRoom}
           activeRoomId={activeRoomId}
@@ -841,14 +885,12 @@ export default function ChatPage() {
           onSelectRoom={selectRoom}
           onRoomsChange={fetchRooms}
           onCloseRoom={async (roomId: string) => {
-            // Optimistic: remove from local state immediately
             setRooms((prev) => prev.filter((r) => r.id !== roomId));
             if (activeRoomId === roomId) setActiveRoomId(null);
             try {
               await fetch(`/api/rooms/${roomId}/members`, { method: 'DELETE' });
             } catch (err) {
               console.error('Failed to close room:', err);
-              // Re-fetch on failure
               void fetchRooms();
             }
           }}
@@ -857,17 +899,30 @@ export default function ChatPage() {
           locale={locale}
           setLocale={setLocale}
           getPrivateRoomName={getPrivateRoomName}
+          isMobile={isMobile}
+          onOpenNav={() => setNavOpen(true)}
+          activeFolder={activeFolder}
+          onFolderChange={setActiveFolder}
         />
       </div>
 
       {/* Main Chat Area */}
-      <div className="app-main-shell">
+      <div
+        className="app-main-shell"
+        data-active={isMobile ? !!activeRoomId : undefined}
+      >
         {activeRoom ? (
           <ChatView
             room={activeRoom}
             user={user}
             onlineUsers={onlineUsers}
-            onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+            onToggleSidebar={() => {
+              if (isMobile) {
+                setActiveRoomId(null);
+              } else {
+                setSidebarOpen((prev) => !prev);
+              }
+            }}
             onCloseRoom={() => {
               if (activeRoomId) {
                 setRooms((prev) => prev.filter((r) => r.id !== activeRoomId));
@@ -898,26 +953,35 @@ export default function ChatPage() {
             t={t}
             dir={dir}
             roomDisplayName={getPrivateRoomName(activeRoom)}
+            isMobile={isMobile}
           />
         ) : (
-          <div style={{ flex: 1, display: 'grid', placeItems: 'center', color: 'var(--fg-muted)' }}>
-            <div className="card" style={{ width: 'min(440px, calc(100vw - 48px))', minHeight: 420, textAlign: 'center', display: 'grid', gap: 14, justifyItems: 'center', alignContent: 'center' }}>
-            <Image
-              src={brandLogoSrc}
-              alt={t('app.name')}
-              width={280}
-              height={84}
-              unoptimized
-              style={{ width: 'min(280px, 72vw)', height: 'auto', objectFit: 'contain' }}
-            />
-            <p>{t('chat.selectChat')}</p>
-            {/* Mobile: show sidebar button */}
-            {!sidebarOpen && (
-              <button className="btn btn-secondary" onClick={() => setSidebarOpen(true)}>
-                {t('chat.rooms')}
-              </button>
+          <div className={isMobile ? 'mobile-empty-state' : ''} style={isMobile ? { color: 'var(--fg-muted)' } : { flex: 1, display: 'grid', placeItems: 'center', color: 'var(--fg-muted)' }}>
+            {isMobile ? (
+              <div className="mobile-empty-state-content" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
+                <Image
+                  src={brandLogoSrc}
+                  alt={t('app.name')}
+                  width={120}
+                  height={36}
+                  unoptimized
+                  style={{ width: 'min(120px, 40vw)', height: 'auto', objectFit: 'contain', opacity: 0.6 }}
+                />
+                <p style={{ fontSize: 15 }}>{t('chat.selectChat')}</p>
+              </div>
+            ) : (
+              <div className="card" style={{ width: 'min(440px, calc(100vw - 48px))', minHeight: 420, textAlign: 'center', display: 'grid', gap: 14, justifyItems: 'center', alignContent: 'center' }}>
+                <Image
+                  src={brandLogoSrc}
+                  alt={t('app.name')}
+                  width={280}
+                  height={84}
+                  unoptimized
+                  style={{ width: 'min(280px, 72vw)', height: 'auto', objectFit: 'contain' }}
+                />
+                <p>{t('chat.selectChat')}</p>
+              </div>
             )}
-            </div>
           </div>
         )}
       </div>

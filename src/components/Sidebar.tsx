@@ -41,6 +41,10 @@ interface SidebarProps {
   locale: Locale;
   setLocale: (locale: Locale) => void;
   getPrivateRoomName: (room: Room) => string;
+  isMobile?: boolean;
+  onOpenNav?: () => void;
+  activeFolder?: 'all' | 'private' | 'group';
+  onFolderChange?: (folder: 'all' | 'private' | 'group') => void;
 }
 
 const avatarColors = [
@@ -84,6 +88,10 @@ export default function Sidebar({
   locale,
   setLocale,
   getPrivateRoomName,
+  isMobile,
+  onOpenNav,
+  activeFolder,
+  onFolderChange,
 }: SidebarProps) {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
@@ -130,6 +138,20 @@ export default function Sidebar({
       {/* Header */}
       <div className="sidebar-header">
         <div className="sidebar-brand-row">
+          {isMobile && onOpenNav && (
+            <button
+              type="button"
+              className="mobile-menu-btn"
+              onClick={onOpenNav}
+              aria-label="Open menu"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+          )}
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Image
               src={brandLogoSrc}
@@ -147,42 +169,60 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Search */}
-      <div className="sidebar-search-wrap">
-        <input
-          className="input"
-          placeholder={t('chat.searchMessages')}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ borderRadius: 'var(--radius-full)', paddingInline: 14 }}
-        />
+      {/* Folder Tabs (mobile only) */}
+      {isMobile && onFolderChange && (
+        <div className="mobile-folder-tabs">
+          <button
+            className={`mobile-folder-tab${activeFolder === 'all' ? ' active' : ''}`}
+            onClick={() => onFolderChange('all')}
+          >
+            {t('chat.allChats') || 'All Chats'}
+          </button>
+          <button
+            className={`mobile-folder-tab${activeFolder === 'private' ? ' active' : ''}`}
+            onClick={() => onFolderChange('private')}
+          >
+            {t('chat.private') || 'Personal'}
+          </button>
+          <button
+            className={`mobile-folder-tab${activeFolder === 'group' ? ' active' : ''}`}
+            onClick={() => onFolderChange('group')}
+          >
+            {t('chat.groups') || 'Groups'}
+          </button>
+        </div>
+      )}
+
+      {/* Search + New Chat (compact on mobile, row on desktop) */}
+      <div style={{ padding: isMobile ? '0 12px 8px' : '0 14px 8px' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ flex: 1 }}>
+            <input
+              className="input"
+              placeholder={t('chat.searchMessages')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ borderRadius: 'var(--radius-full)', paddingInline: 14 }}
+            />
+          </div>
+          <motion.button
+            type="button"
+            className="btn btn-primary btn-icon"
+            style={{ width: isMobile ? 44 : 'auto', height: 44 }}
+            onClick={() => {
+              setShowNewChat(!showNewChat);
+              if (!showNewChat) searchUsers('');
+            }}
+            whileTap={{ scale: 0.93 }}
+            whileHover={isMobile ? undefined : { scale: 1.01 }}
+            title={t('chat.newChat')}
+          >
+            <AppIcon name={showNewChat ? 'close' : 'newchat'} size={isMobile ? 20 : 16} />
+          </motion.button>
+        </div>
       </div>
 
-      {/* New Chat Button */}
-      <div style={{ padding: '0 14px 8px' }}>
-        <motion.button
-          className="btn btn-primary"
-          style={{ width: '100%' }}
-          onClick={() => {
-            setShowNewChat(!showNewChat);
-            if (!showNewChat) searchUsers('');
-          }}
-          whileTap={{ scale: 0.97 }}
-          whileHover={{ scale: 1.01 }}
-        >
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={showNewChat ? 'close' : 'new'}
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.15 }}
-            >
-              {showNewChat ? t('common.close') : t('chat.newChat')}
-            </motion.span>
-          </AnimatePresence>
-        </motion.button>
-      </div>
+      {/* New Chat Modal */}
 
       {/* New Chat Modal */}
       <AnimatePresence>
@@ -252,16 +292,16 @@ export default function Sidebar({
       <div className="sidebar-rooms">
         {roomsLoading ? (
           Array.from({ length: 7 }).map((_, index) => (
-            <div key={`room-skeleton-${index}`} className="sidebar-room" style={{ pointerEvents: 'none', opacity: 0.5 }}>
-              <div className="avatar" style={{ background: 'var(--bg-tertiary)' }} />
+            <div key={`room-skeleton-${index}`} className="sidebar-room" style={{ pointerEvents: 'none', opacity: 0.5, padding: isMobile ? '12px 16px' : '10px 12px', gap: isMobile ? 12 : 10 }}>
+              <div className="avatar" style={{ width: isMobile ? 48 : 40, height: isMobile ? 48 : 40, background: 'var(--bg-tertiary)' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ height: 11, width: `${62 + ((index * 7) % 20)}%`, borderRadius: 9999, background: 'var(--bg-tertiary)' }} />
-                <div style={{ marginTop: 8, height: 9, width: `${45 + ((index * 11) % 30)}%`, borderRadius: 9999, background: 'var(--bg-hover)' }} />
+                <div style={{ height: 12, width: `${62 + ((index * 7) % 20)}%`, borderRadius: 9999, background: 'var(--bg-tertiary)' }} />
+                <div style={{ marginTop: 6, height: 10, width: `${45 + ((index * 11) % 30)}%`, borderRadius: 9999, background: 'var(--bg-hover)' }} />
               </div>
             </div>
           ))
         ) : filteredRooms.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--fg-muted)', fontSize: 14 }}>
+          <div style={{ textAlign: 'center', padding: isMobile ? '40px 16px' : '40px 16px', color: 'var(--fg-muted)', fontSize: isMobile ? 14 : 13 }}>
             {t('chat.noRooms')}
           </div>
         ) : (
@@ -280,6 +320,7 @@ export default function Sidebar({
               const isOnline = otherMember ? onlineUsers.has(otherMember.user.id) : false;
 
               const typeIconName = room.type === 'CHANNEL' ? 'channel' : room.type === 'GROUP' ? 'group' : null;
+              const avatarSize = isMobile ? 48 : 40;
 
               return (
                 <motion.div
@@ -289,33 +330,40 @@ export default function Sidebar({
                   variants={staggerItem}
                   onClick={() => onSelectRoom(room.id)}
                   className={`sidebar-room${isActive ? ' active' : ''}`}
-                  whileHover={{ backgroundColor: isActive ? undefined : 'var(--bg-hover)' }}
+                  style={{
+                    padding: isMobile ? '12px 16px' : '10px 12px',
+                    gap: isMobile ? 12 : 10,
+                  }}
                 >
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
                     {room.profilePhotoUrl ? (
                       <Image
                         src={room.profilePhotoUrl}
                         alt={roomName}
-                        className="avatar"
-                        width={48}
-                        height={48}
                         unoptimized
-                        style={{ objectFit: 'cover' }}
+                        style={{
+                          width: avatarSize, height: avatarSize,
+                          borderRadius: '50%', objectFit: 'cover',
+                        }}
                       />
                     ) : (
                       <div
                         className="avatar"
-                        style={{ background: getAvatarColor(roomName) }}
+                        style={{
+                          width: avatarSize, height: avatarSize,
+                          background: getAvatarColor(roomName),
+                          fontSize: isMobile ? 18 : 15,
+                        }}
                       >
-                        {typeIconName ? <AppIcon name={typeIconName} size={20} /> : getInitials(roomName)}
+                        {typeIconName ? <AppIcon name={typeIconName} size={isMobile ? 22 : 20} /> : getInitials(roomName)}
                       </div>
                     )}
                     {room.type === 'PRIVATE' && (
                       <div style={{
                         position: 'absolute', bottom: 0, insetInlineEnd: 0,
-                        width: 12, height: 12, borderRadius: '50%',
+                        width: isMobile ? 14 : 12, height: isMobile ? 14 : 12, borderRadius: '50%',
                         background: isOnline ? 'var(--online)' : 'var(--offline)',
-                        border: '2px solid var(--bg-secondary)',
+                        border: `${isMobile ? 2 : 2}px solid var(--bg-secondary)`,
                       }} />
                     )}
                   </div>
@@ -324,18 +372,27 @@ export default function Sidebar({
                     <div style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     }}>
-                      <span style={{ fontWeight: unreadCount > 0 ? 700 : 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: unreadCount > 0 ? 'var(--fg)' : undefined }}>
+                      <span style={{
+                        fontWeight: unreadCount > 0 ? 700 : 600,
+                        fontSize: isMobile ? 15 : 14,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        color: unreadCount > 0 ? 'var(--fg)' : 'var(--fg-secondary)',
+                        maxWidth: 'calc(100% - 60px)',
+                      }}>
                         {roomName}
                       </span>
                       {lastMsg && (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                          <span style={{ fontSize: 11, color: 'var(--fg-muted)' }}>
+                          <span style={{ fontSize: isMobile ? 12 : 11, color: 'var(--fg-muted)' }}>
                             {timeAgo(lastMsg.createdAt)}
                           </span>
                           {unreadCount > 0 && (
                             <motion.span
                               className="badge-count"
-                              style={{ minWidth: 18, height: 18, fontSize: 10, paddingInline: 5 }}
+                              style={{
+                                minWidth: isMobile ? 20 : 18, height: isMobile ? 20 : 18,
+                                fontSize: isMobile ? 11 : 10, paddingInline: isMobile ? 6 : 5,
+                              }}
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
                               transition={spring}
@@ -348,41 +405,39 @@ export default function Sidebar({
                     </div>
                     {lastMsg && (
                       <div style={{
-                        fontSize: 13, color: unreadCount > 0 ? 'var(--fg-secondary)' : 'var(--fg-muted)',
+                        fontSize: isMobile ? 13 : 12,
+                        color: unreadCount > 0 ? 'var(--fg-secondary)' : 'var(--fg-muted)',
                         fontWeight: unreadCount > 0 ? 500 : 400,
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         marginTop: 2,
+                        maxWidth: 'calc(100% - 40px)',
                       }}>
                         {room.type !== 'PRIVATE' && (
-                          <span style={{ color: 'var(--fg-secondary)' }}>{lastMsg.user.username}: </span>
+                          <span style={{ color: 'var(--fg-muted)' }}>{lastMsg.user.username}: </span>
                         )}
                         {lastPreviewText}
                       </div>
                     )}
                   </div>
-                  {/* Close button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onCloseRoom(room.id);
-                    }}
-                    className="btn btn-ghost btn-icon btn-sm"
-                    style={{
-                      position: 'absolute',
-                      top: 4,
-                      insetInlineEnd: 4,
-                      width: 24,
-                      height: 24,
-                      opacity: 0,
-                      transition: 'opacity 0.15s',
-                      zIndex: 2,
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = '0'}
-                  >
-                    <AppIcon name="close" size={12} />
-                  </button>
+                  {/* Close button — desktop only */}
+                  {!isMobile && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCloseRoom(room.id);
+                      }}
+                      className="btn btn-ghost btn-icon btn-sm"
+                      style={{
+                        width: 28, height: 28, flexShrink: 0,
+                        opacity: 0.4,
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = '0.4'}
+                    >
+                      <AppIcon name="close" size={14} />
+                    </button>
+                  )}
                 </motion.div>
               );
             })}
@@ -390,55 +445,57 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* User Info Footer */}
-      <div className="sidebar-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div
-          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-          onClick={() => router.push('/profile')}
-          title="Profile Settings"
-        >
-          <motion.div
-            className="avatar avatar-sm"
-            style={{
-              background: user.avatarUrl ? 'transparent' : getAvatarColor(user.username),
-            }}
-            whileHover={{ scale: 1.1 }}
-            transition={spring}
+      {/* User Info Footer — desktop only */}
+      {!isMobile && (
+        <div className="sidebar-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
+            onClick={() => router.push('/profile')}
+            title="Profile Settings"
           >
-            {user.avatarUrl ? (
-              <Image
-                src={user.avatarUrl}
-                alt="Avatar"
-                width={40}
-                height={40}
-                unoptimized
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              getInitials(user.displayName || user.username)
-            )}
-          </motion.div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 500 }}>{user.displayName || user.username}</div>
+            <motion.div
+              className="avatar avatar-sm"
+              style={{
+                background: user.avatarUrl ? 'transparent' : getAvatarColor(user.username),
+              }}
+              whileHover={{ scale: 1.1 }}
+              transition={spring}
+            >
+              {user.avatarUrl ? (
+                <Image
+                  src={user.avatarUrl}
+                  alt="Avatar"
+                  width={40}
+                  height={40}
+                  unoptimized
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                getInitials(user.displayName || user.username)
+              )}
+            </motion.div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 500 }}>{user.displayName || user.username}</div>
+              {user.isSuperAdmin && (
+                <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>SUPER ADMIN</span>
+              )}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <a href="/settings" className="btn btn-ghost btn-icon btn-sm" title={t('settings.title')}>
+              <AppIcon name="paint" size={16} />
+            </a>
             {user.isSuperAdmin && (
-              <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 600 }}>SUPER ADMIN</span>
+              <a href="/admin" className="btn btn-ghost btn-icon btn-sm" title={t('admin.panel')}>
+                <AppIcon name="settings" size={16} />
+              </a>
             )}
+            <motion.button className="btn btn-ghost btn-icon btn-sm" onClick={onLogout} title={t('auth.logout')} whileTap={{ scale: 0.9 }}>
+              <AppIcon name="logout" size={16} />
+            </motion.button>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <a href="/settings" className="btn btn-ghost btn-icon btn-sm" title={t('settings.title')}>
-            <AppIcon name="paint" size={16} />
-          </a>
-          {user.isSuperAdmin && (
-            <a href="/admin" className="btn btn-ghost btn-icon btn-sm" title={t('admin.panel')}>
-              <AppIcon name="settings" size={16} />
-            </a>
-          )}
-          <motion.button className="btn btn-ghost btn-icon btn-sm" onClick={onLogout} title={t('auth.logout')} whileTap={{ scale: 0.9 }}>
-            <AppIcon name="logout" size={16} />
-          </motion.button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

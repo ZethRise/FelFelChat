@@ -8,6 +8,7 @@ export type AppIconName =
   | 'settings'
   | 'logout'
   | 'close'
+  | 'newchat'
   | 'phone'
   | 'micOn'
   | 'micOff'
@@ -111,6 +112,12 @@ function IconPaths({ name }: { name: AppIconName }) {
         <>
           <path d="M18 6 6 18" />
           <path d="m6 6 12 12" />
+        </>
+      );
+    case 'newchat':
+      return (
+        <>
+          <path d="M12 5v14M5 12h14" />
         </>
       );
     case 'phone':
