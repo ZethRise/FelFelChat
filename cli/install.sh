@@ -682,6 +682,14 @@ ensure_mongodb_replica_set() {
   local repl_set service_name conf_file host_value initiated attempts
   repl_set="${FELFEL_MONGODB_REPLICA_SET:-rs0}"
   conf_file="/etc/mongod.conf"
+
+  # Build mongosh connection args from DATABASE_URL
+  local db_uri
+  db_uri="$(resolve_database_url)"
+  local mongosh_args=(-u "$(echo "$db_uri" | sed -E 's#mongodb://([^:]+):([^@]+)@.*#\1#')" \
+    -p "$(echo "$db_uri" | sed -E 's#mongodb://[^:]+:([^@]+)@.*#\1#')" \
+    --authenticationDatabase admin)
+
   if [[ -f "$conf_file" ]]; then
     if grep -Eq '^[[:space:]]*replication:[[:space:]]*$' "$conf_file"; then
       if grep -Eq '^[[:space:]]*replSetName:[[:space:]]*' "$conf_file"; then
@@ -723,20 +731,20 @@ ensure_mongodb_replica_set() {
   fi
 
   initiated="0"
-  if mongosh --quiet --eval "const s=rs.status(); if (s.ok===1) quit(0); quit(1);" >/dev/null 2>&1; then
+  if mongosh "${mongosh_args[@]}" --quiet --eval "const s=rs.status(); if (s.ok===1) quit(0); quit(1);" >/dev/null 2>&1; then
     initiated="1"
   fi
   if [[ "$initiated" != "1" ]]; then
-    host_value="$(mongosh --quiet --eval "const h=db.hello(); print(h.me || h.primary || '127.0.0.1:27017')" 2>/dev/null | tail -n1 | tr -d '\r')"
+    host_value="$(mongosh "${mongosh_args[@]}" --quiet --eval "const h=db.hello(); print(h.me || h.primary || '127.0.0.1:27017')" 2>/dev/null | tail -n1 | tr -d '\r')"
     if [[ -z "$host_value" ]]; then
       host_value="127.0.0.1:27017"
     fi
-    mongosh --quiet --eval "rs.initiate({_id:'${repl_set}',members:[{_id:0,host:'${host_value}'}]})" >/dev/null 2>&1 || true
+    mongosh "${mongosh_args[@]}" --quiet --eval "rs.initiate({_id:'${repl_set}',members:[{_id:0,host:'${host_value}'}]})" >/dev/null 2>&1 || true
   fi
 
   attempts=45
   while (( attempts > 0 )); do
-    if mongosh --quiet --eval "const s=rs.status(); if (s.ok===1 && (s.myState===1 || s.members.some(m => m.stateStr === 'PRIMARY'))) quit(0); quit(1);" >/dev/null 2>&1; then
+    if mongosh "${mongosh_args[@]}" --quiet --eval "const s=rs.status(); if (s.ok===1 && (s.myState===1 || s.members.some(m => m.stateStr === 'PRIMARY'))) quit(0); quit(1);" >/dev/null 2>&1; then
       return 0
     fi
     sleep 1
