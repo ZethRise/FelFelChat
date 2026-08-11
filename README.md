@@ -115,11 +115,20 @@ FelFelChat/
 
 ## 🚀 راه‌اندازی سریع (لینوکس)
 
+### روش ۱: نصب با npm
+
+```bash
+npm install -g @zethrise/felfelchat
+felfel
+```
+
+### روش ۲: نصب با curl
+
 ```bash
 curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | bash
 ```
 
-بعد از نصب، با دستور `felfel` اپ را مدیریت کنید.
+بعد از نصب، با دستور `felfel` اپ را مدیریت کنید. برای بروزرسانی خودکار، `felfel` را اجرا کنید — در صورت وجود نسخه جدید، گزینه بروزرسانی نمایش داده می‌شود.
 
 ---
 
@@ -428,11 +437,20 @@ FelFelChat/
 
 ## 🚀 Quick Install (Linux)
 
+### Method 1: Install via npm
+
+```bash
+npm install -g @zethrise/felfelchat
+felfel
+```
+
+### Method 2: Install via curl
+
 ```bash
 curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | bash
 ```
 
-After installation, use the `felfel` command to manage your server.
+After installation, use the `felfel` command to manage your server. Run `felfel` to check for updates — if a new version is available, you'll be prompted to update automatically.
 
 ---
 
