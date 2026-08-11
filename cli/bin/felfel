@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# FelFelChat CLI — npm wrapper for install.sh
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+exec bash "${SCRIPT_DIR}/install.sh" tui "$@"

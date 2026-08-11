@@ -6,7 +6,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import { useI18n } from '@/components/providers/I18nProvider';
 import Image from 'next/image';
 import AppIcon from '@/components/AppIcon';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { compressAvatar } from '@/lib/imageCompression';
 import { staggerContainer, staggerItem, fadeSlideUp, spring } from '@/lib/animations';
 
@@ -604,25 +604,45 @@ export default function SettingsPage() {
                 style={{ textAlign: 'center', padding: '24px 0' }}
               >
                 <div className="avatar" style={{ width: 80, height: 80, fontSize: 32, margin: '0 auto 16px', background: 'var(--accent)' }}>
-                  {(user.displayName || user.username).charAt(0).toUpperCase()}
+                  🌶️
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{user.displayName || user.username}</h3>
-                <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>{user.bio || 'No bio'}</p>
+                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{t('settings.appName') || 'FelFel Chat'}</h3>
+                <p style={{ fontSize: 13, color: 'var(--fg-muted)', marginBottom: 16 }}>{t('settings.aboutDesc') || 'A secure and lightweight messaging app'}</p>
                 <div style={{ display: 'flex', gap: 4, justifyContent: 'center', flexWrap: 'wrap', fontSize: 12, color: 'var(--fg-muted)' }}>
-                  <span>Version 1.0.0</span>
+                  <span>v1.1.1</span>
                   <span>•</span>
-                  <span>Made with ❤️</span>
+                  <span>Made with ❤️ by ZethRise</span>
                 </div>
               </motion.div>
               <motion.a
                 variants={staggerItem}
-                href="https://github.com/felfelchat"
+                href="https://git.diastom.xyz/ZethRise/FelFelChat"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', color: 'var(--fg)' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', color: 'var(--fg)', borderBottom: '1px solid var(--stroke-soft)' }}
+              >
+                <AppIcon name="info" size={18} />
+                <span>Source Code</span>
+              </motion.a>
+              <motion.a
+                variants={staggerItem}
+                href="https://www.npmjs.com/package/@zethrise/felfelchat"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', color: 'var(--fg)', borderBottom: '1px solid var(--stroke-soft)' }}
+              >
+                <AppIcon name="download" size={18} />
+                <span>npm: @zethrise/felfelchat</span>
+              </motion.a>
+              <motion.a
+                variants={staggerItem}
+                href="https://git.diastom.xyz/ZethRise/FelFelChat/-/issues"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 0', color: 'var(--fg)', borderBottom: '1px solid var(--stroke-soft)' }}
               >
                 <AppIcon name="help" size={18} />
-                <span>{t('settings.rateApp') || 'Rate this app'}</span>
+                <span>{t('settings.rateApp') || 'Report Issue'}</span>
               </motion.a>
               <motion.a
                 variants={staggerItem}
@@ -666,9 +686,25 @@ export default function SettingsPage() {
         <h1 style={{ fontSize: 18, fontWeight: 700 }}>{t('settings.title')}</h1>
       </motion.div>
 
-      <div style={{ display: 'flex', height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', overflow: 'hidden' }}>
+        {/* Mobile section tabs — horizontal scroll */}
+        <div className="settings-mobile-tabs">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              className={`settings-mobile-tab${activeSection === section.id ? ' active' : ''}`}
+              onClick={() => setActiveSection(section.id as any)}
+            >
+              <AppIcon name={section.icon as any} size={16} />
+              <span>{section.label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Sidebar nav - hidden on mobile */}
         <motion.div
+          className="settings-sidebar-nav"
           style={{
             width: 260,
             borderInlineEnd: '1px solid var(--stroke-soft)',
@@ -797,6 +833,7 @@ export default function SettingsPage() {
               </motion.div>
             </>
           )}
+        </div>
         </div>
       </div>
     </div>

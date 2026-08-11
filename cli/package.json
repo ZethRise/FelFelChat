@@ -1,0 +1,24 @@
+{
+  "name": "@zethrise/felfelchat",
+  "version": "1.1.3",
+  "description": "FelFelChat — secure self-hosted messaging. Includes the felfel CLI manager.",
+  "bin": {
+    "felfel": "bin/felfel"
+  },
+  "files": [
+    "bin/",
+    "install.sh",
+    "README.md"
+  ],
+  "keywords": ["chat", "self-hosted", "messaging", "felchat", "cli"],
+  "author": "ZethRise",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://git.diastom.xyz/ZethRise/FelFelChat.git"
+  },
+  "homepage": "https://git.diastom.xyz/ZethRise/FelFelChat",
+  "engines": {
+    "node": ">=18"
+  }
+}

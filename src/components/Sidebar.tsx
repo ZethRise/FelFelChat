@@ -194,7 +194,7 @@ export default function Sidebar({
       )}
 
       {/* Search + New Chat (compact on mobile, row on desktop) */}
-      <div style={{ padding: isMobile ? '0 12px 24px' : '0 14px 8px' }}>
+      <div style={{ padding: isMobile ? '16px 12px 24px' : '0 14px 8px' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
             <input
@@ -208,7 +208,6 @@ export default function Sidebar({
           <motion.button
             type="button"
             className="btn btn-primary btn-icon"
-            style={{ width: isMobile ? 44 : 'auto', height: 44 }}
             onClick={() => {
               setShowNewChat(!showNewChat);
               if (!showNewChat) searchUsers('');
@@ -483,7 +482,7 @@ export default function Sidebar({
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
             <a href="/settings" className="btn btn-ghost btn-icon btn-sm" title={t('settings.title')}>
-              <AppIcon name="paint" size={16} />
+              <AppIcon name="settings" size={16} />
             </a>
             {user.isSuperAdmin && (
               <a href="/admin" className="btn btn-ghost btn-icon btn-sm" title={t('admin.panel')}>

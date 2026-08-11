@@ -9,7 +9,7 @@ set -euo pipefail
 #   felfel
 
 APP_NAME="FelFel Chat"
-SCRIPT_VERSION="1.1.0"
+SCRIPT_VERSION="1.1.3"
 NPM_PACKAGE="@zethrise/felfelchat"
 DEFAULT_SERVICE_NAME="felfelchat"
 DEFAULT_REPO="${GIT_REPO_URL:-${GITHUB_REPO:-https://github.com/MatinSenPai/FelFelChat}}"

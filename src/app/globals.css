@@ -803,6 +803,17 @@ textarea.input {
 /* ══════════════════════════════════════
    ADMIN
    ══════════════════════════════════════ */
+
+/* Settings page — mobile tabs (hidden on desktop) */
+.settings-mobile-tabs {
+  display: none;
+}
+
+/* Settings page — desktop sidebar nav */
+.settings-sidebar-nav {
+  flex-shrink: 0;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1398,6 +1409,57 @@ tr:hover td { background: var(--bg-hover); }
     padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 72px);
     background: var(--bg);
   }
+
+  /* ════════════════════════════════════
+     SETTINGS PAGE — Mobile
+     ════════════════════════════════════ */
+  .settings-mobile-tabs {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 12px;
+    gap: 6px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--stroke-soft);
+    flex-shrink: 0;
+  }
+
+  .settings-mobile-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .settings-mobile-tab {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--fg-muted);
+    background: transparent;
+    border: 1px solid var(--stroke-soft);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+
+  .settings-mobile-tab:active {
+    opacity: 0.7;
+  }
+
+  .settings-mobile-tab.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  .settings-sidebar-nav {
+    display: none !important;
+  }
 }
 
 /* ── Desktop: hide mobile-only, restore sidebar ── */
@@ -1406,7 +1468,8 @@ tr:hover td { background: var(--bg-hover); }
   .mobile-back-btn,
   .mobile-empty-state,
   .mobile-nav-panel,
-  .mobile-folder-tabs {
+  .mobile-folder-tabs,
+  .settings-mobile-tabs {
     display: none;
   }
 
