@@ -117,7 +117,10 @@ export async function POST(
     }
 
     const isEncryptedEnvelope = typeof text === 'string' && text.startsWith('hush:v1:');
-    const maxTextLength = isEncryptedEnvelope ? 12000 : 2000;
+    if (text && !isEncryptedEnvelope) {
+      return NextResponse.json({ error: 'End-to-end encryption required' }, { status: 400 });
+    }
+    const maxTextLength = 12000;
     if (text && text.length > maxTextLength) {
       return NextResponse.json({ error: 'Message too long' }, { status: 400 });
     }

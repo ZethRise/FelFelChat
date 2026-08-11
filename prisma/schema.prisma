@@ -59,6 +59,16 @@ model Settings {
   updatedAt           DateTime @updatedAt
 }
 
+model KeyExchange {
+  id          String   @id @default(uuid()) @map("_id")
+  roomId      String   @unique
+  requesterId String
+  status      String   @default("PENDING")
+  key         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Sticker {
   id         String   @id @default(uuid()) @map("_id")
   fileUrl    String

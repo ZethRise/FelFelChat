@@ -7,8 +7,9 @@ import ImagePreviewModal from './ImagePreviewModal';
 import UserProfileModal from './UserProfileModal';
 import GroupMembersModal from './GroupMembersModal';
 import EmojiStickerPicker from './EmojiStickerPicker';
+import KeyExchangeModal from './KeyExchangeModal';
 import { compressImage } from '@/lib/imageCompression';
-import { decryptHushMessage, encryptHushMessage, isHushEncryptedMessage } from '@/lib/hushCrypto';
+import { decryptHushMessage, encryptHushMessage, isHushEncryptedMessage, generateStrongKey } from '@/lib/hushCrypto';
 import Image from 'next/image';
 import AppIcon from './AppIcon';
 import { fadeSlideUp } from '@/lib/animations';
@@ -133,7 +134,12 @@ export default function ChatView({
   const [animatingMessageIds, setAnimatingMessageIds] = useState<Set<string>>(new Set());
   const [sendInputBurst, setSendInputBurst] = useState(false);
   const [roomPassphrase, setRoomPassphrase] = useState('');
+  const [keyExchangeStatus, setKeyExchangeStatus] = useState<'IDLE' | 'PENDING' | 'INCOMING'>('IDLE');
+  const [showKeyExchangeModal, setShowKeyExchangeModal] = useState(false);
+  const [keyExchangeLoading, setKeyExchangeLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const roomPhotoInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,14 +153,49 @@ export default function ChatView({
   }, [roomPassphrase]);
 
   useEffect(() => {
-    const storageKey = `felfel:hush:${room.id}`;
+    const storageKey = `felfel:keys:${user.id}:${room.id}`;
     seenMessagesRef.current = new Set();
     roomPassphraseRef.current = '';
     setRoomPassphrase('');
-    const storedPassphrase = sessionStorage.getItem(storageKey) || '';
-    roomPassphraseRef.current = storedPassphrase;
-    setRoomPassphrase(storedPassphrase);
-  }, [room.id]);
+    setShowKeyExchangeModal(false);
+
+    const storedKey = localStorage.getItem(storageKey) || sessionStorage.getItem(`felfel:hush:${room.id}`) || '';
+    if (storedKey) {
+      localStorage.setItem(storageKey, storedKey);
+      roomPassphraseRef.current = storedKey;
+      setRoomPassphrase(storedKey);
+      return;
+    }
+
+    fetch(`/api/rooms/${room.id}/key-exchange`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.keyExchange) {
+          const { status, requesterId, key } = data.keyExchange;
+          if (status === 'ACCEPTED' && key) {
+            localStorage.setItem(storageKey, key);
+            roomPassphraseRef.current = key;
+            setRoomPassphrase(key);
+            setShowKeyExchangeModal(false);
+          } else if (status === 'PENDING') {
+            if (requesterId === user.id) {
+              setKeyExchangeStatus('PENDING');
+            } else {
+              setKeyExchangeStatus('INCOMING');
+            }
+            setShowKeyExchangeModal(true);
+          }
+        } else {
+          setKeyExchangeStatus('IDLE');
+          setShowKeyExchangeModal(true);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to fetch key exchange:', err);
+        setKeyExchangeStatus('IDLE');
+        setShowKeyExchangeModal(true);
+      });
+  }, [room.id, user.id]);
 
   const hydrateText = useCallback(async (rawText: string | null | undefined): Promise<{ text: string | null; state: 'plain' | 'locked' | 'failed' }> => {
     if (!rawText) {
@@ -323,9 +364,28 @@ export default function ChatView({
       }
     };
 
+    const handleKeyExchangeRequest = (payload: { roomId: string; requesterId: string }) => {
+      if (payload.roomId === room.id && payload.requesterId !== user.id) {
+        setKeyExchangeStatus('INCOMING');
+        setShowKeyExchangeModal(true);
+      }
+    };
+
+    const handleKeyExchangeAccept = (payload: { roomId: string; key: string }) => {
+      if (payload.roomId === room.id) {
+        const storageKey = `felfel:keys:${user.id}:${room.id}`;
+        localStorage.setItem(storageKey, payload.key);
+        roomPassphraseRef.current = payload.key;
+        setRoomPassphrase(payload.key);
+        setShowKeyExchangeModal(false);
+      }
+    };
+
     socket.on('message:new', handleNewMessage);
     socket.on('message:read', handleMessageRead);
     socket.on('message:typing', handleTyping);
+    socket.on('key_exchange:request', handleKeyExchangeRequest);
+    socket.on('key_exchange:accept', handleKeyExchangeAccept);
 
     socket.emit('room:join', room.id);
 
@@ -333,13 +393,39 @@ export default function ChatView({
       socket.off('message:new', handleNewMessage);
       socket.off('message:read', handleMessageRead);
       socket.off('message:typing', handleTyping);
+      socket.off('key_exchange:request', handleKeyExchangeRequest);
+      socket.off('key_exchange:accept', handleKeyExchangeAccept);
       socket.emit('room:leave', room.id);
     };
   }, [room.id, user.id, user.username, upsertMessage, hydrateMessage]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
+
+  useEffect(() => {
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        document.documentElement.style.setProperty(
+          '--chat-viewport-height',
+          `${window.visualViewport.height}px`
+        );
+      }
+    };
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener('scroll', handleViewportResize);
+      handleViewportResize();
+    }
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+        window.visualViewport.removeEventListener('scroll', handleViewportResize);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -369,15 +455,17 @@ export default function ChatView({
     const trimmedText = text.trim();
     if (!trimmedText) return;
     const passphrase = roomPassphraseRef.current.trim();
+    if (!passphrase) {
+      setShowKeyExchangeModal(true);
+      return;
+    }
     let outgoingText = trimmedText;
-    if (passphrase) {
-      try {
-        outgoingText = await encryptHushMessage(trimmedText, passphrase, room.id);
-      } catch (error) {
-        console.error('Failed to encrypt message:', error);
-        alert('Encryption failed. Message was not sent.');
-        return;
-      }
+    try {
+      outgoingText = await encryptHushMessage(trimmedText, passphrase, room.id);
+    } catch (error) {
+      console.error('Failed to encrypt message:', error);
+      alert('Encryption failed. Message was not sent.');
+      return;
     }
 
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -417,6 +505,12 @@ export default function ChatView({
     setTimeout(() => setSendInputBurst(false), 220);
     setText('');
     setReplyingTo(null);
+    requestAnimationFrame(() => {
+      textInputRef.current?.focus({ preventScroll: true });
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    });
 
     try {
       const response = await fetch(`/api/messages/${room.id}`, {
@@ -440,27 +534,48 @@ export default function ChatView({
     }
   };
 
-  const handleEncryptionToggle = () => {
-    const current = roomPassphraseRef.current;
-    const nextValue = window.prompt('Set room encryption key. Leave empty to disable.', current);
-    if (nextValue === null) {
-      return;
+  const handleRequestKey = async () => {
+    setKeyExchangeLoading(true);
+    try {
+      const res = await fetch(`/api/rooms/${room.id}/key-exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request' }),
+      });
+      const data = await res.json();
+      if (data.keyExchange) {
+        setKeyExchangeStatus('PENDING');
+      }
+    } catch (err) {
+      console.error('Failed to request key:', err);
+    } finally {
+      setKeyExchangeLoading(false);
     }
-    const trimmed = nextValue.trim();
-    const storageKey = `felfel:hush:${room.id}`;
-    if (!trimmed) {
-      sessionStorage.removeItem(storageKey);
-      roomPassphraseRef.current = '';
-      setRoomPassphrase('');
-      return;
+  };
+
+  const handleAcceptKey = async () => {
+    setKeyExchangeLoading(true);
+    try {
+      const newKey = generateStrongKey();
+      const res = await fetch(`/api/rooms/${room.id}/key-exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept', key: newKey }),
+      });
+      const data = await res.json();
+      if (data.keyExchange && data.keyExchange.key) {
+        const key = data.keyExchange.key;
+        const storageKey = `felfel:keys:${user.id}:${room.id}`;
+        localStorage.setItem(storageKey, key);
+        roomPassphraseRef.current = key;
+        setRoomPassphrase(key);
+        setShowKeyExchangeModal(false);
+      }
+    } catch (err) {
+      console.error('Failed to accept key:', err);
+    } finally {
+      setKeyExchangeLoading(false);
     }
-    if (trimmed.length < 6) {
-      alert('Encryption key must be at least 6 characters.');
-      return;
-    }
-    sessionStorage.setItem(storageKey, trimmed);
-    roomPassphraseRef.current = trimmed;
-    setRoomPassphrase(trimmed);
   };
 
   const handleTyping = () => {
@@ -715,15 +830,6 @@ export default function ChatView({
           </div>
           </div>
           <div className="chat-header-actions">
-          <button
-            type="button"
-            className="btn btn-ghost btn-icon btn-sm"
-            onClick={handleEncryptionToggle}
-            title={roomPassphrase ? 'Encryption enabled' : 'Enable encryption'}
-            style={{ color: roomPassphrase ? 'var(--accent)' : undefined }}
-          >
-            <AppIcon name="lock" size={16} />
-          </button>
           {user.isSuperAdmin && room.type !== 'PRIVATE' && (
             <div className="chat-header-photo-actions">
               <input
@@ -770,7 +876,7 @@ export default function ChatView({
       </div>
       </div>
 
-      <div className="chat-messages" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="chat-messages" ref={messagesContainerRef} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {loading ? (
           <div style={{ display: 'grid', gap: 10, padding: 8 }}>
             {Array.from({ length: 10 }).map((_, index) => (
@@ -823,59 +929,41 @@ export default function ChatView({
                   transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   style={{
                     display: 'flex',
-                    flexDirection: isOwn ? (dir === 'rtl' ? 'row' : 'row-reverse') : (dir === 'rtl' ? 'row-reverse' : 'row'),
-                  alignItems: 'flex-end',
-                  gap: 8,
-                  marginTop: isFirstInGroup ? 11 : 1,
-                }}
-              >
-                {/* Avatar (side) - clickable */}
-                <div
-                  style={{ width: 32, flexShrink: 0, cursor: showAvatar && !isOwn ? 'pointer' : 'default' }}
-                  onClick={() => showAvatar && !isOwn && setViewingUser(msg.user.id)}
-                  title={showAvatar && !isOwn ? 'View Profile' : ''}
+                    flexDirection: 'row',
+                    justifyContent: isOwn
+                      ? (dir === 'rtl' ? 'flex-start' : 'flex-end')
+                      : (dir === 'rtl' ? 'flex-end' : 'flex-start'),
+                    alignItems: 'center',
+                    gap: 6,
+                    marginTop: isFirstInGroup ? 3 : 1,
+                  }}
                 >
-                  {showAvatar && !isOwn && (
-                    <div
-                      className="avatar avatar-xs"
+                  {/* For received messages in RTL: Reply button rendered before bubble so it appears on the RIGHT of gray bubble */}
+                  {!isOwn && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setReplyingTo(msg)}
                       style={{
-                        background: msg.user.avatarUrl ? 'transparent' : getAvatarColor(msg.user.username),
+                        fontSize: 11,
+                        padding: '2px 6px',
+                        height: 22,
+                        opacity: 0.6,
+                        flexShrink: 0,
                       }}
                     >
-                      {msg.user.avatarUrl ? (
-                        <Image
-                          src={msg.user.avatarUrl}
-                          alt="Avatar"
-                          width={32}
-                          height={32}
-                          unoptimized
-                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                        />
-                      ) : (
-                        (msg.user.displayName || msg.user.username).charAt(0).toUpperCase()
-                      )}
-                    </div>
+                      ↩ {t('chat.reply')}
+                    </button>
                   )}
-                </div>
 
-                {/* Bubble + reply row */}
-                <div
-                  ref={(el) => {
-                    if (el) messageRefs.current.set(msg.id, el);
-                  }}
-                  style={{
-                    maxWidth: '70%',
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'flex-end',
-                    gap: 4,
-                  }}
-                >
                   {/* Actual bubble */}
                   <div
+                    ref={(el) => {
+                      if (el) messageRefs.current.set(msg.id, el);
+                    }}
                     className={isPending ? 'chat-message-pending' : undefined}
                     style={{
-                      flex: 1,
+                      maxWidth: '75%',
                       minWidth: 0,
                       padding: '8px 12px',
                       borderRadius: isOwn
@@ -1216,21 +1304,24 @@ export default function ChatView({
                     </div>
                   </div>
 
-                  {/* Reply button */}
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => setReplyingTo(msg)}
-                    style={{
-                      alignSelf: isOwn ? 'flex-end' : 'flex-start',
-                      fontSize: 11,
-                      padding: '2px 8px',
-                      opacity: 0.6,
-                    }}
-                  >
-                    ↩ {t('chat.reply')}
-                  </button>
-                </div>
-              </motion.div>
+                  {/* For sent messages in RTL: Reply button rendered after bubble so it appears on the LEFT of blue bubble */}
+                  {isOwn && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setReplyingTo(msg)}
+                      style={{
+                        fontSize: 11,
+                        padding: '2px 6px',
+                        height: 22,
+                        opacity: 0.6,
+                        flexShrink: 0,
+                      }}
+                    >
+                      ↩ {t('chat.reply')}
+                    </button>
+                  )}
+                </motion.div>
             );
           })
         )}
@@ -1299,6 +1390,13 @@ export default function ChatView({
         <form
           onSubmit={sendMessage}
           className="chat-composer"
+          autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
           style={{
             padding: '10px 16px',
             display: 'flex',
@@ -1352,7 +1450,19 @@ export default function ChatView({
 
           {/* Text input */}
           <input
+            ref={textInputRef}
+            type="text"
+            name="chat_message"
             className="input"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="sentences"
+            spellCheck={false}
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            inputMode="search"
+            aria-autocomplete="none"
             style={{
               flex: 1,
               height: 42,
@@ -1361,11 +1471,15 @@ export default function ChatView({
               opacity: sendInputBurst ? 0.55 : 1,
               transform: sendInputBurst ? 'translateY(1px) scale(0.995)' : 'translateY(0) scale(1)',
               transition: 'opacity 0.2s ease, transform 0.2s ease',
+              cursor: !roomPassphrase ? 'pointer' : 'text',
             }}
-            placeholder={roomPassphrase ? `${t('chat.typeMessage')} (E2EE)` : t('chat.typeMessage')}
+            placeholder={roomPassphrase ? `${t('chat.typeMessage')} (E2EE)` : t('e2ee.enterPassphrase')}
             value={text}
             onChange={(e) => { setText(e.target.value); handleTyping(); }}
-            autoComplete="off"
+            onClick={() => {
+              if (!roomPassphrase) setShowKeyExchangeModal(true);
+            }}
+            readOnly={!roomPassphrase}
           />
 
           {/* Send */}
@@ -1373,6 +1487,7 @@ export default function ChatView({
             type="submit"
             className="btn btn-primary btn-icon"
             disabled={!text.trim() && !uploading}
+            onMouseDown={(e) => e.preventDefault()}
             style={{
               transform: dir === 'rtl' ? 'scaleX(-1)' : 'none',
               width: 42,
@@ -1411,6 +1526,20 @@ export default function ChatView({
             setShowMembersModal(false);
             setViewingUser(userId);
           }}
+          t={t}
+          dir={dir}
+        />
+      )}
+
+      {/* Key Exchange Modal */}
+      {showKeyExchangeModal && (
+        <KeyExchangeModal
+          isOpen={showKeyExchangeModal}
+          status={keyExchangeStatus}
+          otherUserName={roomDisplayName}
+          onRequestKey={handleRequestKey}
+          onAcceptKey={handleAcceptKey}
+          loading={keyExchangeLoading}
           t={t}
           dir={dir}
         />

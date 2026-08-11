@@ -157,6 +157,18 @@ export function isHushEncryptedMessage(text: string | null | undefined): text is
   return typeof text === 'string' && text.startsWith(HushPrefix);
 }
 
+export function generateStrongKey(): string {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+  const cryptoObj = typeof window !== 'undefined' ? window.crypto : globalThis.crypto;
+  const bytes = new Uint8Array(64);
+  cryptoObj.getRandomValues(bytes);
+  let result = '';
+  for (let i = 0; i < 64; i++) {
+    result += charset[bytes[i] % charset.length];
+  }
+  return result;
+}
+
 export async function encryptHushMessage(plaintext: string, passphrase: string, context: string): Promise<string> {
   if (!passphrase.trim()) {
     throw new Error('PassphraseRequired');

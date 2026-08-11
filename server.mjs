@@ -274,6 +274,16 @@ app.prepare().then(() => {
       socket.to(`room:${roomId}`).emit("message:typing", username);
     });
 
+    socket.on("key_exchange:request", async ({ roomId }) => {
+      if (!roomId || typeof roomId !== "string") return;
+      socket.to(`room:${roomId}`).emit("key_exchange:request", { roomId, requesterId: userId });
+    });
+
+    socket.on("key_exchange:accept", async ({ roomId, key }) => {
+      if (!roomId || typeof roomId !== "string") return;
+      io.to(`room:${roomId}`).emit("key_exchange:accept", { roomId, key });
+    });
+
     socket.on("message:read", async ({ messageId, roomId }) => {
       if (!roomId || typeof roomId !== "string") return;
       if (!joinedRooms.has(roomId)) return;

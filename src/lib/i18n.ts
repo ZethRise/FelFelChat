@@ -75,6 +75,26 @@ const dictionaries: Record<Locale, Record<string, string>> = {
     'chat.replyTo': 'پاسخ به',
     'chat.closeRoomConfirm': 'این چت بسته بشه؟',
 
+    // E2EE Key Exchange
+    'keyExchange.title': 'رمزنگاری انتهای‌به‌انتها',
+    'keyExchange.idleDesc': 'برای شروع گفتگوی امن با {name}، درخواست تبادل کلید ارسال کنید.',
+    'keyExchange.pendingDesc': 'درخواست تبادل کلید برای {name} ارسال شد. در انتظار تأیید...',
+    'keyExchange.incomingDesc': '{name} درخواست شروع گفتگوی رمزگذاری‌شده دارد.',
+    'keyExchange.requestBtn': 'ارسال درخواست کلید',
+    'keyExchange.acceptBtn': 'تأیید و شروع چت',
+    'keyExchange.waitingBtn': 'در انتظار پاسخ...',
+
+    // FEL Backup
+    'fel.title': 'بکاپ کلیدهای رمزنگاری (.fel)',
+    'fel.desc': 'ذخیره کلیدهای چت در یک فایل رمزگذاری‌شده .fel برای بازیابی بعد از تعویض دستگاه یا اکانت.',
+    'fel.exportKeys': 'دانلود بکاپ (.fel)',
+    'fel.importKeys': 'بازیابی کلیدها (.fel)',
+    'fel.enterPassword': 'یک رمز برای فایل بکاپ وارد کنید:',
+    'fel.enterImportPassword': 'رمز فایل بکاپ .fel را وارد کنید:',
+    'fel.exportSuccess': 'فایل بکاپ با موفقیت دانلود شد.',
+    'fel.importSuccess': '{count} کلید رمزنگاری بازیابی شد.',
+    'fel.wrongPassword': 'رمز عبور فایل بکاپ اشتباه است.',
+
     // Room
     'room.members': 'اعضا',
     'room.memberCount': '{count} عضو',
@@ -329,6 +349,26 @@ const dictionaries: Record<Locale, Record<string, string>> = {
     'chat.replyTo': 'Reply to',
     'chat.closeRoomConfirm': 'Close this chat?',
     'chat.cancelReply': 'Cancel',
+
+    // E2EE Key Exchange
+    'keyExchange.title': 'End-to-End Encryption',
+    'keyExchange.idleDesc': 'To start an encrypted chat with {name}, send a key exchange request.',
+    'keyExchange.pendingDesc': 'Key exchange request sent to {name}. Waiting for approval...',
+    'keyExchange.incomingDesc': '{name} wants to start an encrypted chat with you.',
+    'keyExchange.requestBtn': 'Send Key Request',
+    'keyExchange.acceptBtn': 'Accept & Unlock Chat',
+    'keyExchange.waitingBtn': 'Waiting for approval...',
+
+    // FEL Backup
+    'fel.title': 'Encryption Key Backup (.fel)',
+    'fel.desc': 'Save your chat encryption keys in an encrypted .fel backup file to restore across devices or accounts.',
+    'fel.exportKeys': 'Export Keys (.fel)',
+    'fel.importKeys': 'Import Keys (.fel)',
+    'fel.enterPassword': 'Enter a password to protect the backup file:',
+    'fel.enterImportPassword': 'Enter the password for the .fel backup file:',
+    'fel.exportSuccess': 'Key backup file downloaded successfully.',
+    'fel.importSuccess': '{count} encryption keys restored successfully.',
+    'fel.wrongPassword': 'Incorrect backup file password.',
     
     // Picker
     'picker.emoji': 'Emoji',

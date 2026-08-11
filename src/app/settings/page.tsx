@@ -9,6 +9,7 @@ import AppIcon from '@/components/AppIcon';
 import { motion, AnimatePresence } from 'motion/react';
 import { compressAvatar } from '@/lib/imageCompression';
 import { staggerContainer, staggerItem, fadeSlideUp, spring } from '@/lib/animations';
+import { encryptHushMessage, decryptHushMessage } from '@/lib/hushCrypto';
 
 function getUploadExtensionByMime(mimeType: string): string {
   switch (mimeType) {
@@ -223,6 +224,78 @@ export default function SettingsPage() {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const fileImportRef = useState<HTMLInputElement | null>(null);
+
+  const handleExportFel = async () => {
+    if (!user) return;
+    const password = window.prompt(t('fel.enterPassword'));
+    if (!password || !password.trim()) return;
+
+    const keysMap: Record<string, string> = {};
+    const prefix = `felfel:keys:${user.id}:`;
+    for (let i = 0; i < localStorage.length; i++) {
+      const keyName = localStorage.key(i);
+      if (keyName && keyName.startsWith(prefix)) {
+        const roomId = keyName.slice(prefix.length);
+        const keyValue = localStorage.getItem(keyName);
+        if (keyValue) keysMap[roomId] = keyValue;
+      }
+    }
+
+    const backupPayload = {
+      version: 1,
+      userId: user.id,
+      exportedAt: new Date().toISOString(),
+      keys: keysMap,
+    };
+
+    try {
+      const encrypted = await encryptHushMessage(JSON.stringify(backupPayload), password.trim(), 'fel-backup');
+      const blob = new Blob([encrypted], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `felfel-keys-${user.username}-${new Date().toISOString().slice(0, 10)}.fel`;
+      a.click();
+      URL.revokeObjectURL(url);
+      alert(t('fel.exportSuccess'));
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Export failed');
+    }
+  };
+
+  const handleImportFel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const fileContent = event.target?.result as string;
+      if (!fileContent) return;
+      const password = window.prompt(t('fel.enterImportPassword'));
+      if (!password || !password.trim()) return;
+
+      try {
+        const decryptedJson = await decryptHushMessage(fileContent.trim(), password.trim(), 'fel-backup');
+        const parsed = JSON.parse(decryptedJson);
+        if (parsed.keys && typeof parsed.keys === 'object') {
+          let count = 0;
+          for (const [roomId, roomKey] of Object.entries(parsed.keys)) {
+            if (typeof roomKey === 'string' && roomKey.trim()) {
+              localStorage.setItem(`felfel:keys:${user.id}:${roomId}`, roomKey.trim());
+              count++;
+            }
+          }
+          alert(t('fel.importSuccess').replace('{count}', String(count)));
+        }
+      } catch (err) {
+        console.error('Import failed:', err);
+        alert(t('fel.wrongPassword'));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   useEffect(() => {
     if (user) {
@@ -482,6 +555,28 @@ export default function SettingsPage() {
                   options={screenLockOptions}
                   label={t('settings.screenLock') || 'Screen lock'}
                 />
+              </motion.div>
+              <motion.div variants={staggerItem} style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--stroke-soft)' }}>
+                <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 6 }}>{t('fel.title')}</h3>
+                <p style={{ fontSize: 13, color: 'var(--fg-secondary)', marginBottom: 16, lineHeight: 1.5 }}>
+                  {t('fel.desc')}
+                </p>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <button type="button" className="btn btn-primary" onClick={handleExportFel}>
+                    <AppIcon name="download" size={16} />
+                    <span>{t('fel.exportKeys')}</span>
+                  </button>
+                  <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <AppIcon name="key" size={16} />
+                    <span>{t('fel.importKeys')}</span>
+                    <input
+                      type="file"
+                      accept=".fel"
+                      style={{ display: 'none' }}
+                      onChange={handleImportFel}
+                    />
+                  </label>
+                </div>
               </motion.div>
             </motion.div>
           </AnimatePresence>

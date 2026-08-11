@@ -1178,9 +1178,12 @@ tr:hover td { background: var(--bg-hover); }
   }
 
   .chat-shell {
-    height: 100dvh;
+    height: var(--chat-viewport-height, 100dvh);
+    max-height: var(--chat-viewport-height, 100dvh);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    position: relative;
   }
 
   /* ── Chat Header: Telegram-style ── */
@@ -1190,8 +1193,9 @@ tr:hover td { background: var(--bg-hover); }
     padding: calc(env(safe-area-inset-top) + 6px) 8px 8px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--stroke-soft);
-    position: relative;
-    z-index: 10;
+    position: sticky;
+    top: 0;
+    z-index: 30;
     flex-shrink: 0;
   }
 
@@ -1229,6 +1233,7 @@ tr:hover td { background: var(--bg-hover); }
     padding-bottom: calc(8px + env(safe-area-inset-bottom));
     font-size: 14px;
     overflow-y: auto;
+    overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1238,6 +1243,9 @@ tr:hover td { background: var(--bg-hover); }
     padding-bottom: calc(6px + env(safe-area-inset-bottom));
     background: var(--bg-secondary);
     border-top: 1px solid var(--stroke-soft);
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
     flex-shrink: 0;
   }
 
