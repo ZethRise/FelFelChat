@@ -100,6 +100,9 @@ FelFelChat/
 ├── docs/
 │   └── OPERATIONS.md         # راهنمای عملیات و نگهداری
 ├── install.sh                # اسکریپت نصب و مدیریت (لینوکس)
+├── Dockerfile                # ایمیج پروداکشن
+├── docker-compose.yml        # اپ + MongoDB replica set
+├── docker/                   # entrypoint و seed سوپرادمین
 └── .env.example              # نمونه متغیرهای محیطی
 ```
 
@@ -129,6 +132,24 @@ curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | b
 ```
 
 بعد از نصب، با دستور `felfel` اپ را مدیریت کنید. برای بروزرسانی خودکار، `felfel` را اجرا کنید — در صورت وجود نسخه جدید، گزینه بروزرسانی نمایش داده می‌شود.
+
+### روش ۳: نصب با Docker
+
+```bash
+git clone https://github.com/ZethRise/FelFelChat.git
+cd FelFelChat
+docker compose up -d --build
+```
+
+اپ روی `http://127.0.0.1:3000` بالا می‌آید. MongoDB replica set داخل Compose راه‌اندازی می‌شود.
+
+اگر `SUPERADMIN_PASSWORD` را ست نکنید، رمز سوپرادمین در لاگ کانتینر چاپ می‌شود:
+
+```bash
+docker compose logs app | grep SUPERADMIN_PASSWORD
+```
+
+برای پروداکشن، `JWT_SECRET` و `BACKUP_SIGNING_KEY` را در `.env` کنار `docker-compose.yml` بگذارید.
 
 ---
 
@@ -422,6 +443,9 @@ FelFelChat/
 ├── docs/
 │   └── OPERATIONS.md         # Operations runbook
 ├── install.sh                # Linux one-command installer & manager
+├── Dockerfile                # Production image
+├── docker-compose.yml        # App + MongoDB replica set
+├── docker/                   # Entrypoint and superadmin seed
 └── .env.example              # Environment variable template
 ```
 
@@ -451,6 +475,24 @@ curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | b
 ```
 
 After installation, use the `felfel` command to manage your server. Run `felfel` to check for updates — if a new version is available, you'll be prompted to update automatically.
+
+### Method 3: Install with Docker
+
+```bash
+git clone https://github.com/ZethRise/FelFelChat.git
+cd FelFelChat
+docker compose up -d --build
+```
+
+The app is available at `http://127.0.0.1:3000`. Compose starts a MongoDB replica set automatically.
+
+If you do not set `SUPERADMIN_PASSWORD`, the generated password is printed in the app container logs:
+
+```bash
+docker compose logs app | grep SUPERADMIN_PASSWORD
+```
+
+For production, put `JWT_SECRET` and `BACKUP_SIGNING_KEY` in a `.env` file next to `docker-compose.yml`.
 
 ---
 

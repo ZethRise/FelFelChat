@@ -1,0 +1,45 @@
+services:
+  mongo:
+    image: mongo:8
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "try { rs.status().ok } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }).ok }",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
+  app:
+    build: .
+    image: felfelchat:local
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      APP_ORIGIN: ${APP_ORIGIN:-http://127.0.0.1:3000}
+      DATABASE_URL: mongodb://mongo:27017/felfelchat?replicaSet=rs0
+      JWT_SECRET: ${JWT_SECRET:-}
+      BACKUP_SIGNING_KEY: ${BACKUP_SIGNING_KEY:-}
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-admin}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
+      SUPERADMIN_DISPLAY_NAME: ${SUPERADMIN_DISPLAY_NAME:-Super Admin}
+    volumes:
+      - app-data:/data
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  app-data:
