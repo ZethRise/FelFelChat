@@ -28,28 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = useCallback(async () => {
-    try {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
-      if (res.ok && data.user) {
-        setUser(data.user);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Check auth on mount
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
   const parseResponseBody = useCallback(async (res: Response): Promise<Record<string, unknown>> => {
     const text = await res.text();
     if (!text) return {};
@@ -59,6 +37,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: 'serverError', debug: text };
     }
   }, []);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await parseResponseBody(res);
+      const nextUser = (data as { user?: User }).user;
+      if (res.ok && nextUser) {
+        setUser(nextUser);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [parseResponseBody]);
+
+  // Check auth on mount
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const login = useCallback(async (username: string, password: string) => {
     try {

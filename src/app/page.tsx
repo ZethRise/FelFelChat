@@ -517,7 +517,7 @@ export default function ChatPage() {
     };
 
     const handleConnectError = (error: Error & { data?: unknown }) => {
-      console.error('Socket connect error:', error.message, error.data);
+      console.warn('Socket connect error:', error.message, error.data);
     };
 
     const handleMessageNew = (payload?: MessageNewPayload) => {

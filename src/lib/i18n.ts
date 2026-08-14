@@ -83,6 +83,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
     'keyExchange.requestBtn': 'ارسال درخواست کلید',
     'keyExchange.acceptBtn': 'تأیید و شروع چت',
     'keyExchange.waitingBtn': 'در انتظار پاسخ...',
+    'keyExchange.requestSent': 'یک درخواست ارسال شد',
+    'keyExchange.requestSentHint': 'منتظر تأیید طرف مقابل برای شروع گفتگوی رمزگذاری‌شده بمانید.',
 
     // FEL Backup
     'fel.title': 'بکاپ کلیدهای رمزنگاری (.fel)',
@@ -358,6 +360,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
     'keyExchange.requestBtn': 'Send Key Request',
     'keyExchange.acceptBtn': 'Accept & Unlock Chat',
     'keyExchange.waitingBtn': 'Waiting for approval...',
+    'keyExchange.requestSent': 'A request has been sent',
+    'keyExchange.requestSentHint': 'Waiting for the other person to accept end-to-end encryption.',
 
     // FEL Backup
     'fel.title': 'Encryption Key Backup (.fel)',

@@ -1,3 +1,9 @@
+import { gcm } from '@noble/ciphers/aes.js';
+import { hkdf } from '@noble/hashes/hkdf.js';
+import { hmac } from '@noble/hashes/hmac.js';
+import { pbkdf2Async } from '@noble/hashes/pbkdf2.js';
+import { sha256 } from '@noble/hashes/sha2.js';
+
 const HushPrefix = 'hush:v1:';
 const HushAlgorithm = 'pbkdf2-sha256+a256gcm+hmac-sha256';
 const HushIterations = 210000;
@@ -16,18 +22,37 @@ interface HushEnvelopeV1 {
 }
 
 interface DerivedKeys {
-  kek: CryptoKey;
-  hmacKey: CryptoKey;
+  kekRaw: ByteArray;
+  hmacRaw: ByteArray;
 }
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-function getCrypto(): Crypto {
-  if (!globalThis.crypto || !globalThis.crypto.subtle) {
+function hasSubtleCrypto(): boolean {
+  return Boolean(globalThis.crypto?.subtle);
+}
+
+function getRandomCrypto(): Crypto {
+  if (!globalThis.crypto?.getRandomValues) {
     throw new Error('WebCryptoUnavailable');
   }
   return globalThis.crypto;
+}
+
+function toByteArray(bytes: Uint8Array): ByteArray {
+  const output: ByteArray = new Uint8Array(bytes.length);
+  output.set(bytes);
+  return output;
+}
+
+function timingSafeEqual(left: Uint8Array, right: Uint8Array): boolean {
+  if (left.length !== right.length) return false;
+  let diff = 0;
+  for (let i = 0; i < left.length; i += 1) {
+    diff |= left[i] ^ right[i];
+  }
+  return diff === 0;
 }
 
 function concatBytes(parts: ByteArray[]): ByteArray {
@@ -84,61 +109,101 @@ function scopedPassphrase(passphrase: string, context: string): string {
 }
 
 async function deriveKeys(passphrase: string, context: string, salt: ByteArray, iterations: number): Promise<DerivedKeys> {
-  const crypto = getCrypto();
-  const material = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(scopedPassphrase(passphrase, context)),
-    'PBKDF2',
-    false,
-    ['deriveBits']
-  );
-  const masterKeyRaw: ByteArray = new Uint8Array(
-    await crypto.subtle.deriveBits(
-      {
-        name: 'PBKDF2',
-        hash: 'SHA-256',
-        salt,
-        iterations,
-      },
-      material,
-      256
-    )
-  );
-  const hkdfMaterial = await crypto.subtle.importKey('raw', masterKeyRaw, 'HKDF', false, ['deriveBits']);
+  const password = encoder.encode(scopedPassphrase(passphrase, context));
+  let masterKeyRaw: ByteArray;
+
+  if (hasSubtleCrypto()) {
+    const crypto = getRandomCrypto();
+    const material = await crypto.subtle.importKey('raw', password, 'PBKDF2', false, ['deriveBits']);
+    masterKeyRaw = new Uint8Array(
+      await crypto.subtle.deriveBits(
+        {
+          name: 'PBKDF2',
+          hash: 'SHA-256',
+          salt,
+          iterations,
+        },
+        material,
+        256
+      )
+    );
+  } else {
+    masterKeyRaw = toByteArray(await pbkdf2Async(sha256, password, salt, { c: iterations, dkLen: 32 }));
+  }
+
   const hkdfSalt: ByteArray = new Uint8Array(0);
-  const kekRaw: ByteArray = new Uint8Array(
-    await crypto.subtle.deriveBits(
-      {
-        name: 'HKDF',
-        hash: 'SHA-256',
-        salt: hkdfSalt,
-        info: encoder.encode('hush-wrap-v1'),
-      },
-      hkdfMaterial,
-      256
-    )
-  );
-  const hmacRaw: ByteArray = new Uint8Array(
-    await crypto.subtle.deriveBits(
-      {
-        name: 'HKDF',
-        hash: 'SHA-256',
-        salt: hkdfSalt,
-        info: encoder.encode('hush-mac-v1'),
-      },
-      hkdfMaterial,
-      256
-    )
-  );
-  const kek = await crypto.subtle.importKey('raw', kekRaw, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-  const hmacKey = await crypto.subtle.importKey(
-    'raw',
-    hmacRaw,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign', 'verify']
-  );
-  return { kek, hmacKey };
+  let kekRaw: ByteArray;
+  let hmacRaw: ByteArray;
+
+  if (hasSubtleCrypto()) {
+    const crypto = getRandomCrypto();
+    const hkdfMaterial = await crypto.subtle.importKey('raw', masterKeyRaw, 'HKDF', false, ['deriveBits']);
+    kekRaw = new Uint8Array(
+      await crypto.subtle.deriveBits(
+        {
+          name: 'HKDF',
+          hash: 'SHA-256',
+          salt: hkdfSalt,
+          info: encoder.encode('hush-wrap-v1'),
+        },
+        hkdfMaterial,
+        256
+      )
+    );
+    hmacRaw = new Uint8Array(
+      await crypto.subtle.deriveBits(
+        {
+          name: 'HKDF',
+          hash: 'SHA-256',
+          salt: hkdfSalt,
+          info: encoder.encode('hush-mac-v1'),
+        },
+        hkdfMaterial,
+        256
+      )
+    );
+  } else {
+    kekRaw = toByteArray(hkdf(sha256, masterKeyRaw, hkdfSalt, encoder.encode('hush-wrap-v1'), 32));
+    hmacRaw = toByteArray(hkdf(sha256, masterKeyRaw, hkdfSalt, encoder.encode('hush-mac-v1'), 32));
+  }
+
+  return { kekRaw, hmacRaw };
+}
+
+async function aesGcmEncrypt(key: ByteArray, iv: ByteArray, data: ByteArray): Promise<ByteArray> {
+  if (hasSubtleCrypto()) {
+    const crypto = getRandomCrypto();
+    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+    return new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cryptoKey, data));
+  }
+  return toByteArray(gcm(key, iv).encrypt(data));
+}
+
+async function aesGcmDecrypt(key: ByteArray, iv: ByteArray, data: ByteArray): Promise<ByteArray> {
+  if (hasSubtleCrypto()) {
+    const crypto = getRandomCrypto();
+    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cryptoKey, data));
+  }
+  return toByteArray(gcm(key, iv).decrypt(data));
+}
+
+async function hmacSign(key: ByteArray, data: ByteArray): Promise<ByteArray> {
+  if (hasSubtleCrypto()) {
+    const crypto = getRandomCrypto();
+    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return new Uint8Array(await crypto.subtle.sign({ name: 'HMAC' }, cryptoKey, data));
+  }
+  return toByteArray(hmac(sha256, key, data));
+}
+
+async function hmacVerify(key: ByteArray, data: ByteArray, mac: ByteArray): Promise<boolean> {
+  if (hasSubtleCrypto()) {
+    const crypto = getRandomCrypto();
+    const cryptoKey = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+    return crypto.subtle.verify({ name: 'HMAC' }, cryptoKey, mac, data);
+  }
+  return timingSafeEqual(hmac(sha256, key, data), mac);
 }
 
 function parseEnvelope(payload: string): HushEnvelopeV1 {
@@ -159,7 +224,7 @@ export function isHushEncryptedMessage(text: string | null | undefined): text is
 
 export function generateStrongKey(): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
-  const cryptoObj = typeof window !== 'undefined' ? window.crypto : globalThis.crypto;
+  const cryptoObj = getRandomCrypto();
   const bytes = new Uint8Array(64);
   cryptoObj.getRandomValues(bytes);
   let result = '';
@@ -173,17 +238,14 @@ export async function encryptHushMessage(plaintext: string, passphrase: string, 
   if (!passphrase.trim()) {
     throw new Error('PassphraseRequired');
   }
-  const crypto = getCrypto();
+  const crypto = getRandomCrypto();
   const salt: ByteArray = crypto.getRandomValues(new Uint8Array(16));
   const wrapIv: ByteArray = crypto.getRandomValues(new Uint8Array(12));
   const contentIv: ByteArray = crypto.getRandomValues(new Uint8Array(12));
   const dekRaw: ByteArray = crypto.getRandomValues(new Uint8Array(32));
-  const { kek, hmacKey } = await deriveKeys(passphrase, context, salt, HushIterations);
-  const dek = await crypto.subtle.importKey('raw', dekRaw, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-  const wrappedDek: ByteArray = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: wrapIv }, kek, dekRaw));
-  const ciphertext: ByteArray = new Uint8Array(
-    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: contentIv }, dek, encoder.encode(plaintext))
-  );
+  const { kekRaw, hmacRaw } = await deriveKeys(passphrase, context, salt, HushIterations);
+  const wrappedDek = await aesGcmEncrypt(kekRaw, wrapIv, dekRaw);
+  const ciphertext = await aesGcmEncrypt(dekRaw, contentIv, encoder.encode(plaintext));
   const macPayload = concatBytes([
     new Uint8Array([1]),
     salt,
@@ -193,7 +255,7 @@ export async function encryptHushMessage(plaintext: string, passphrase: string, 
     ciphertext,
     encoder.encode(context),
   ]);
-  const mac: ByteArray = new Uint8Array(await crypto.subtle.sign({ name: 'HMAC' }, hmacKey, macPayload));
+  const mac = await hmacSign(hmacRaw, macPayload);
   const envelope: HushEnvelopeV1 = {
     v: 1,
     alg: HushAlgorithm,
@@ -216,8 +278,7 @@ export async function decryptHushMessage(payload: string, passphrase: string, co
   const contentIv = decodeBase64Url(envelope.ci);
   const ciphertext = decodeBase64Url(envelope.c);
   const mac = decodeBase64Url(envelope.h);
-  const { kek, hmacKey } = await deriveKeys(passphrase, context, salt, envelope.i);
-  const crypto = getCrypto();
+  const { kekRaw, hmacRaw } = await deriveKeys(passphrase, context, salt, envelope.i);
   const macPayload = concatBytes([
     new Uint8Array([1]),
     salt,
@@ -227,18 +288,11 @@ export async function decryptHushMessage(payload: string, passphrase: string, co
     ciphertext,
     encoder.encode(context),
   ]);
-  const macOk = await crypto.subtle.verify({ name: 'HMAC' }, hmacKey, mac, macPayload);
+  const macOk = await hmacVerify(hmacRaw, macPayload, mac);
   if (!macOk) {
     throw new Error('InvalidMac');
   }
-  const dekRaw = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: wrapIv }, kek, wrappedDek);
-  const dek = await crypto.subtle.importKey(
-    'raw',
-    dekRaw,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['decrypt']
-  );
-  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: contentIv }, dek, ciphertext);
+  const dekRaw = await aesGcmDecrypt(kekRaw, wrapIv, wrappedDek);
+  const plaintext = await aesGcmDecrypt(dekRaw, contentIv, ciphertext);
   return decoder.decode(plaintext);
 }

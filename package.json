@@ -16,6 +16,8 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@noble/ciphers": "^2.3.0",
+    "@noble/hashes": "^2.3.0",
     "@prisma/client": "^5.22.0",
     "@sapphi-red/web-noise-suppressor": "^0.4.0",
     "@sentry/node": "^8.55.0",

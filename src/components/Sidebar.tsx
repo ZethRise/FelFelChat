@@ -156,9 +156,10 @@ export default function Sidebar({
             <Image
               src={brandLogoSrc}
               alt={t('app.name')}
-              width={110}
-              height={30}
+              width={98}
+              height={27}
               unoptimized
+              loading="eager"
               style={{ width: 98, height: 'auto', objectFit: 'contain' }}
             />
           </div>
@@ -194,7 +195,7 @@ export default function Sidebar({
       )}
 
       {/* Search + New Chat (compact on mobile, row on desktop) */}
-      <div style={{ padding: isMobile ? '16px 12px 24px' : '0 14px 8px' }}>
+      <div style={{ padding: isMobile ? '16px 12px 24px' : '0 14px 8px', paddingTop: '6%' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
             <input

@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/api/auth/login', '/api/auth/signup', '/api/health', '/api/ready'];
+const PUBLIC_PATHS = [
+  '/login',
+  '/signup',
+  '/api/auth',
+  '/api/health',
+  '/api/ready',
+  '/api/settings/public',
+];
 
 function isPublic(pathname: string): boolean {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function isApiPath(pathname: string): boolean {
+  return pathname === '/api' || pathname.startsWith('/api/');
 }
 
 export function proxy(request: NextRequest) {
@@ -35,6 +46,11 @@ export function proxy(request: NextRequest) {
   // Check for auth cookie
   const token = request.cookies.get('token')?.value;
   if (!token) {
+    // Fetch callers expect JSON. Never send the HTML login page for API routes.
+    if (isApiPath(pathname)) {
+      return NextResponse.json({ error: 'unauthorized', user: null }, { status: 401 });
+    }
+
     const loginUrl = new URL('/login', request.url);
     return NextResponse.redirect(loginUrl);
   }

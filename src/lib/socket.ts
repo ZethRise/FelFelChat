@@ -8,8 +8,7 @@ export function getSocket(): Socket {
   if (!socket) {
     socket = io({
       path: '/socket.io/',
-      transports: ['websocket'],
-      upgrade: false,
+      transports: ['websocket', 'polling'],
       autoConnect: false,
       withCredentials: true,
       reconnection: true,

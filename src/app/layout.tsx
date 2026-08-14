@@ -48,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fa" dir="rtl" suppressHydrationWarning>
+    <html lang="fa" dir="rtl" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${estedad.variable} ${vazirmatn.variable} ${sora.variable}`}
         style={{ fontFamily: "var(--font-estedad), var(--font-sora), sans-serif" }}

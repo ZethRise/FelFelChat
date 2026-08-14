@@ -7,7 +7,6 @@ import ImagePreviewModal from './ImagePreviewModal';
 import UserProfileModal from './UserProfileModal';
 import GroupMembersModal from './GroupMembersModal';
 import EmojiStickerPicker from './EmojiStickerPicker';
-import KeyExchangeModal from './KeyExchangeModal';
 import { compressImage } from '@/lib/imageCompression';
 import { decryptHushMessage, encryptHushMessage, isHushEncryptedMessage, generateStrongKey } from '@/lib/hushCrypto';
 import Image from 'next/image';
@@ -107,6 +106,38 @@ function mergeReadBy(current: string | undefined, userId: string): string {
   return Array.from(next).join(',');
 }
 
+interface PendingOutgoing {
+  tempId: string;
+  text: string;
+  replyToId: string | null;
+  replyTo: Message['replyTo'];
+  createdAt: string;
+}
+
+function pendingQueueStorageKey(userId: string, roomId: string) {
+  return `felfel:pending-out:${userId}:${roomId}`;
+}
+
+function readPendingQueue(userId: string, roomId: string): PendingOutgoing[] {
+  try {
+    const raw = sessionStorage.getItem(pendingQueueStorageKey(userId, roomId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed as PendingOutgoing[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingQueue(userId: string, roomId: string, queue: PendingOutgoing[]) {
+  const key = pendingQueueStorageKey(userId, roomId);
+  if (queue.length === 0) {
+    sessionStorage.removeItem(key);
+    return;
+  }
+  sessionStorage.setItem(key, JSON.stringify(queue));
+}
+
 export default function ChatView({
   room,
   user,
@@ -135,7 +166,6 @@ export default function ChatView({
   const [sendInputBurst, setSendInputBurst] = useState(false);
   const [roomPassphrase, setRoomPassphrase] = useState('');
   const [keyExchangeStatus, setKeyExchangeStatus] = useState<'IDLE' | 'PENDING' | 'INCOMING'>('IDLE');
-  const [showKeyExchangeModal, setShowKeyExchangeModal] = useState(false);
   const [keyExchangeLoading, setKeyExchangeLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -147,6 +177,8 @@ export default function ChatView({
   const animationTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const roomPassphraseRef = useRef('');
   const seenMessagesRef = useRef<Set<string>>(new Set());
+  const pendingOutgoingRef = useRef<PendingOutgoing[]>([]);
+  const flushPendingOutgoingRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     roomPassphraseRef.current = roomPassphrase;
@@ -157,7 +189,8 @@ export default function ChatView({
     seenMessagesRef.current = new Set();
     roomPassphraseRef.current = '';
     setRoomPassphrase('');
-    setShowKeyExchangeModal(false);
+    setKeyExchangeStatus('IDLE');
+    pendingOutgoingRef.current = readPendingQueue(user.id, room.id);
 
     const storedKey = localStorage.getItem(storageKey) || sessionStorage.getItem(`felfel:hush:${room.id}`) || '';
     if (storedKey) {
@@ -176,24 +209,17 @@ export default function ChatView({
             localStorage.setItem(storageKey, key);
             roomPassphraseRef.current = key;
             setRoomPassphrase(key);
-            setShowKeyExchangeModal(false);
+            setKeyExchangeStatus('IDLE');
           } else if (status === 'PENDING') {
-            if (requesterId === user.id) {
-              setKeyExchangeStatus('PENDING');
-            } else {
-              setKeyExchangeStatus('INCOMING');
-            }
-            setShowKeyExchangeModal(true);
+            setKeyExchangeStatus(requesterId === user.id ? 'PENDING' : 'INCOMING');
           }
         } else {
           setKeyExchangeStatus('IDLE');
-          setShowKeyExchangeModal(true);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch key exchange:', err);
         setKeyExchangeStatus('IDLE');
-        setShowKeyExchangeModal(true);
       });
   }, [room.id, user.id]);
 
@@ -244,7 +270,35 @@ export default function ChatView({
         const data = await res.json();
         if (data.messages) {
           const hydrated = await Promise.all((data.messages as Message[]).map((item) => hydrateMessage(item)));
-          setMessages(hydrated);
+          const pendingMessages: Message[] = pendingOutgoingRef.current.map((item) => ({
+            id: item.tempId,
+            text: item.text,
+            decryptedText: item.text,
+            encryptedTextState: 'plain',
+            fileUrl: null,
+            fileName: null,
+            mimeType: null,
+            messageType: 'text',
+            userId: user.id,
+            createdAt: item.createdAt,
+            user: {
+              id: user.id,
+              username: user.username,
+              displayName: user.displayName,
+            },
+            replyTo: item.replyTo,
+            pending: true,
+          }));
+          setMessages((prev) => {
+            const incomingIds = new Set(hydrated.map((item) => item.id));
+            const extras = prev.filter((item) => !incomingIds.has(item.id) && (item.pending || !hydrated.some((msg) => msg.id === item.id)));
+            const pendingIds = new Set(pendingMessages.map((item) => item.id));
+            const extraUnique = extras.filter((item) => !incomingIds.has(item.id) && !pendingIds.has(item.id));
+            return [...hydrated, ...pendingMessages, ...extraUnique];
+          });
+          if (roomPassphraseRef.current.trim()) {
+            void flushPendingOutgoingRef.current();
+          }
         }
       } catch (error) {
         console.error(error);
@@ -256,7 +310,7 @@ export default function ChatView({
       void loadMessages();
     }, 0);
     return () => clearTimeout(timer);
-  }, [room.id, roomPassphrase, hydrateMessage]);
+  }, [room.id, roomPassphrase, hydrateMessage, user.displayName, user.id, user.username]);
 
   const markMessageAnimated = useCallback((messageId: string) => {
     setAnimatingMessageIds((prev) => {
@@ -308,6 +362,62 @@ export default function ChatView({
     });
     markMessageAnimated(hydratedMessage.id);
   }, [markMessageAnimated, hydrateMessage]);
+
+  const deliverQueuedMessage = useCallback(async (item: PendingOutgoing) => {
+    const passphrase = roomPassphraseRef.current.trim();
+    if (!passphrase) {
+      throw new Error('Missing encryption key');
+    }
+    const outgoingText = await encryptHushMessage(item.text, passphrase, room.id);
+    const response = await fetch(`/api/messages/${room.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: outgoingText,
+        replyToId: item.replyToId,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.message) {
+      throw new Error('Failed to send queued message');
+    }
+    await replaceTempMessage(item.tempId, data.message as Message);
+    onMessageSent(room.id, item.text, null);
+  }, [onMessageSent, replaceTempMessage, room.id]);
+
+  const flushPendingOutgoing = useCallback(async () => {
+    const passphrase = roomPassphraseRef.current.trim();
+    if (!passphrase) return;
+    const queued = pendingOutgoingRef.current;
+    if (queued.length === 0) return;
+
+    pendingOutgoingRef.current = [];
+    writePendingQueue(user.id, room.id, []);
+
+    const failed: PendingOutgoing[] = [];
+    for (const item of queued) {
+      try {
+        await deliverQueuedMessage(item);
+      } catch (error) {
+        console.error('Failed to flush pending message:', error);
+        failed.push(item);
+      }
+    }
+
+    if (failed.length > 0) {
+      pendingOutgoingRef.current = [...failed, ...pendingOutgoingRef.current];
+      writePendingQueue(user.id, room.id, pendingOutgoingRef.current);
+    }
+  }, [deliverQueuedMessage, room.id, user.id]);
+
+  useEffect(() => {
+    flushPendingOutgoingRef.current = flushPendingOutgoing;
+  }, [flushPendingOutgoing]);
+
+  useEffect(() => {
+    if (!roomPassphrase) return;
+    void flushPendingOutgoing();
+  }, [roomPassphrase, flushPendingOutgoing]);
 
   useEffect(() => {
     return () => {
@@ -367,7 +477,6 @@ export default function ChatView({
     const handleKeyExchangeRequest = (payload: { roomId: string; requesterId: string }) => {
       if (payload.roomId === room.id && payload.requesterId !== user.id) {
         setKeyExchangeStatus('INCOMING');
-        setShowKeyExchangeModal(true);
       }
     };
 
@@ -377,7 +486,8 @@ export default function ChatView({
         localStorage.setItem(storageKey, payload.key);
         roomPassphraseRef.current = payload.key;
         setRoomPassphrase(payload.key);
-        setShowKeyExchangeModal(false);
+        setKeyExchangeStatus('IDLE');
+        void flushPendingOutgoingRef.current();
       }
     };
 
@@ -450,15 +560,124 @@ export default function ChatView({
     }
   }, [messages, room.id, user.id]);
 
-  const sendMessage = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleRequestKey = async (): Promise<boolean> => {
+    setKeyExchangeLoading(true);
+    try {
+      const res = await fetch(`/api/rooms/${room.id}/key-exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request' }),
+      });
+      const data = await res.json();
+      const exchange = data.keyExchange;
+      if (!exchange) return false;
+
+      if (exchange.status === 'ACCEPTED' && exchange.key) {
+        const storageKey = `felfel:keys:${user.id}:${room.id}`;
+        localStorage.setItem(storageKey, exchange.key);
+        roomPassphraseRef.current = exchange.key;
+        setRoomPassphrase(exchange.key);
+        setKeyExchangeStatus('IDLE');
+        return true;
+      }
+
+      setKeyExchangeStatus(exchange.requesterId === user.id ? 'PENDING' : 'INCOMING');
+      return true;
+    } catch (err) {
+      console.error('Failed to request key:', err);
+      return false;
+    } finally {
+      setKeyExchangeLoading(false);
+    }
+  };
+
+  const handleAcceptKey = async (): Promise<boolean> => {
+    setKeyExchangeLoading(true);
+    try {
+      const newKey = generateStrongKey();
+      const res = await fetch(`/api/rooms/${room.id}/key-exchange`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'accept', key: newKey }),
+      });
+      const data = await res.json();
+      if (data.keyExchange && data.keyExchange.key) {
+        const key = data.keyExchange.key;
+        const storageKey = `felfel:keys:${user.id}:${room.id}`;
+        localStorage.setItem(storageKey, key);
+        roomPassphraseRef.current = key;
+        setRoomPassphrase(key);
+        setKeyExchangeStatus('IDLE');
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Failed to accept key:', err);
+      return false;
+    } finally {
+      setKeyExchangeLoading(false);
+    }
+  };
+
+  const sendMessage = async (e?: FormEvent) => {
+    e?.preventDefault();
     const trimmedText = text.trim();
     if (!trimmedText) return;
-    const passphrase = roomPassphraseRef.current.trim();
-    if (!passphrase) {
-      setShowKeyExchangeModal(true);
-      return;
+    if (!roomPassphraseRef.current.trim()) {
+      if (keyExchangeStatus === 'INCOMING') {
+        const accepted = await handleAcceptKey();
+        if (!accepted || !roomPassphraseRef.current.trim()) return;
+      } else {
+        const queued: PendingOutgoing = {
+          tempId: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+          text: trimmedText,
+          replyToId: replyingTo?.id || null,
+          replyTo: replyingTo
+            ? {
+                id: replyingTo.id,
+                text: replyingTo.text,
+                decryptedText: replyingTo.decryptedText ?? replyingTo.text,
+                encryptedTextState: replyingTo.encryptedTextState || 'plain',
+                fileUrl: replyingTo.fileUrl,
+                fileName: replyingTo.fileName || null,
+                mimeType: replyingTo.mimeType || null,
+                user: replyingTo.user,
+              }
+            : null,
+          createdAt: new Date().toISOString(),
+        };
+        pendingOutgoingRef.current = [...pendingOutgoingRef.current, queued];
+        writePendingQueue(user.id, room.id, pendingOutgoingRef.current);
+        void upsertMessage({
+          id: queued.tempId,
+          text: queued.text,
+          decryptedText: queued.text,
+          encryptedTextState: 'plain',
+          fileUrl: null,
+          fileName: null,
+          mimeType: null,
+          messageType: 'text',
+          userId: user.id,
+          createdAt: queued.createdAt,
+          user: {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+          },
+          replyTo: queued.replyTo,
+          pending: true,
+        });
+        setText('');
+        setReplyingTo(null);
+        await handleRequestKey();
+        if (roomPassphraseRef.current.trim()) {
+          void flushPendingOutgoing();
+        }
+        return;
+      }
     }
+    const passphrase = roomPassphraseRef.current.trim();
+    if (!passphrase) return;
     let outgoingText = trimmedText;
     try {
       outgoingText = await encryptHushMessage(trimmedText, passphrase, room.id);
@@ -531,50 +750,6 @@ export default function ChatView({
       setMessages((prev) => prev.filter((message) => message.id !== tempId));
       setText(trimmedText);
       console.error('Failed to send message:', err);
-    }
-  };
-
-  const handleRequestKey = async () => {
-    setKeyExchangeLoading(true);
-    try {
-      const res = await fetch(`/api/rooms/${room.id}/key-exchange`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'request' }),
-      });
-      const data = await res.json();
-      if (data.keyExchange) {
-        setKeyExchangeStatus('PENDING');
-      }
-    } catch (err) {
-      console.error('Failed to request key:', err);
-    } finally {
-      setKeyExchangeLoading(false);
-    }
-  };
-
-  const handleAcceptKey = async () => {
-    setKeyExchangeLoading(true);
-    try {
-      const newKey = generateStrongKey();
-      const res = await fetch(`/api/rooms/${room.id}/key-exchange`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'accept', key: newKey }),
-      });
-      const data = await res.json();
-      if (data.keyExchange && data.keyExchange.key) {
-        const key = data.keyExchange.key;
-        const storageKey = `felfel:keys:${user.id}:${room.id}`;
-        localStorage.setItem(storageKey, key);
-        roomPassphraseRef.current = key;
-        setRoomPassphrase(key);
-        setShowKeyExchangeModal(false);
-      }
-    } catch (err) {
-      console.error('Failed to accept key:', err);
-    } finally {
-      setKeyExchangeLoading(false);
     }
   };
 
@@ -1326,6 +1501,30 @@ export default function ChatView({
           })
         )}
 
+        {!roomPassphrase && keyExchangeStatus === 'PENDING' && (
+          <div className="key-exchange-notice" role="status">
+            <AppIcon name="lock" size={16} />
+            <div className="key-exchange-notice-title">{t('keyExchange.requestSent')}</div>
+            <div>{t('keyExchange.requestSentHint')}</div>
+          </div>
+        )}
+
+        {!roomPassphrase && keyExchangeStatus === 'INCOMING' && (
+          <div className="key-exchange-notice" role="status">
+            <AppIcon name="lock" size={16} />
+            <div className="key-exchange-notice-title">{t('keyExchange.title')}</div>
+            <div>{t('keyExchange.incomingDesc').replace('{name}', roomDisplayName)}</div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => { void handleAcceptKey(); }}
+              disabled={keyExchangeLoading}
+            >
+              {keyExchangeLoading ? <div className="spinner" style={{ width: 18, height: 18 }} /> : t('keyExchange.acceptBtn')}
+            </button>
+          </div>
+        )}
+
         {/* Typing indicator */}
         <AnimatePresence>
         {typingUser && (
@@ -1387,16 +1586,10 @@ export default function ChatView({
           )}
           </AnimatePresence>
 
-        <form
-          onSubmit={sendMessage}
+        <div
           className="chat-composer"
-          autoComplete="off"
-          autoCapitalize="off"
-          autoCorrect="off"
-          spellCheck={false}
-          data-1p-ignore="true"
-          data-lpignore="true"
-          data-bwignore="true"
+          role="group"
+          aria-label={t('chat.typeMessage')}
           style={{
             padding: '10px 16px',
             display: 'flex',
@@ -1448,21 +1641,27 @@ export default function ChatView({
             )}
           </div>
 
-          {/* Text input */}
+          {/* Text input — keep this out of a <form> so Chrome/Gboard
+              do not treat it as a payment/address field. */}
           <input
             ref={textInputRef}
             type="text"
-            name="chat_message"
-            className="input"
+            id="felfel-composer"
+            name="felfel-composer"
+            className="input chat-composer-input"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="sentences"
             spellCheck={false}
+            inputMode="text"
+            enterKeyHint="send"
+            autoSave="off"
+            aria-autocomplete="none"
+            data-form-type="other"
             data-1p-ignore="true"
             data-lpignore="true"
             data-bwignore="true"
-            inputMode="search"
-            aria-autocomplete="none"
+            data-op-ignore="true"
             style={{
               flex: 1,
               height: 42,
@@ -1471,22 +1670,24 @@ export default function ChatView({
               opacity: sendInputBurst ? 0.55 : 1,
               transform: sendInputBurst ? 'translateY(1px) scale(0.995)' : 'translateY(0) scale(1)',
               transition: 'opacity 0.2s ease, transform 0.2s ease',
-              cursor: !roomPassphrase ? 'pointer' : 'text',
             }}
-            placeholder={roomPassphrase ? `${t('chat.typeMessage')} (E2EE)` : t('e2ee.enterPassphrase')}
+            placeholder={roomPassphrase ? `${t('chat.typeMessage')} (E2EE)` : t('chat.typeMessage')}
             value={text}
             onChange={(e) => { setText(e.target.value); handleTyping(); }}
-            onClick={() => {
-              if (!roomPassphrase) setShowKeyExchangeModal(true);
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                void sendMessage();
+              }
             }}
-            readOnly={!roomPassphrase}
           />
 
           {/* Send */}
           <motion.button
-            type="submit"
+            type="button"
             className="btn btn-primary btn-icon"
             disabled={!text.trim() && !uploading}
+            onClick={() => { void sendMessage(); }}
             onMouseDown={(e) => e.preventDefault()}
             style={{
               transform: dir === 'rtl' ? 'scaleX(-1)' : 'none',
@@ -1498,7 +1699,7 @@ export default function ChatView({
           >
             <AppIcon name="send" size={18} />
           </motion.button>
-        </form>
+        </div>
         </>
       )}
 
@@ -1531,19 +1732,6 @@ export default function ChatView({
         />
       )}
 
-      {/* Key Exchange Modal */}
-      {showKeyExchangeModal && (
-        <KeyExchangeModal
-          isOpen={showKeyExchangeModal}
-          status={keyExchangeStatus}
-          otherUserName={roomDisplayName}
-          onRequestKey={handleRequestKey}
-          onAcceptKey={handleAcceptKey}
-          loading={keyExchangeLoading}
-          t={t}
-          dir={dir}
-        />
-      )}
     </div>
   );
 }
