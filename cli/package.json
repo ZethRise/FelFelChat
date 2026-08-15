@@ -15,9 +15,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://git.diastom.xyz/ZethRise/FelFelChat.git"
+    "url": "https://github.com/ZethRise/FelFelChat.git"
   },
-  "homepage": "https://git.diastom.xyz/ZethRise/FelFelChat",
+  "homepage": "https://github.com/ZethRise/FelFelChat",
   "engines": {
     "node": ">=18"
   }

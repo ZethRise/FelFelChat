@@ -4,6 +4,8 @@
 
 **فل‌فل‌چت** یک پیام‌رسان بلادرنگ مدرن و امن است که با Next.js، Rust و MongoDB ساخته شده. این پروژه برای استقرار روی سرور خودتان (self-hosted) طراحی شده و از ویژگی‌هایی مانند تماس صوتی، رمزنگاری، چندزبانگی و پنل مدیریت پیشرفته برخوردار است.
 
+🔗 **مخزن:** https://github.com/ZethRise/FelFelChat
+
 ---
 
 ## ✨ ویژگی‌ها
@@ -36,7 +38,7 @@
 | فونت | Vazirmatn (فارسی) + Sora (لاتین) |
 | تماس صوتی | WebRTC + Google STUN + Open Relay TURN |
 | مانیتورینگ | Sentry |
-| زبان | TypeScript |
+| زبان | Rust + TypeScript |
 
 ---
 
@@ -71,6 +73,8 @@ FelFelChat/
 ├── fonts/
 ├── docs/
 │   └── OPERATIONS.md
+├── CONTRIBUTING.md
+├── SECURITY.md
 ├── Cargo.toml
 ├── install.sh
 ├── Dockerfile
@@ -101,7 +105,7 @@ felfel
 ### روش ۲: نصب با curl
 
 ```bash
-curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | bash
+curl -sL https://raw.githubusercontent.com/ZethRise/FelFelChat/master/install.sh | bash
 ```
 
 بعد از نصب، با دستور `felfel` اپ را مدیریت کنید. برای بروزرسانی خودکار، `felfel` را اجرا کنید — در صورت وجود نسخه جدید، گزینه بروزرسانی نمایش داده می‌شود.
@@ -131,7 +135,7 @@ docker compose logs app | grep SUPERADMIN_PASSWORD
 ### ۱. کلون پروژه
 
 ```bash
-git clone https://git.diastom.xyz/ZethRise/FelFelChat.git
+git clone https://github.com/ZethRise/FelFelChat.git
 cd FelFelChat
 ```
 
@@ -302,9 +306,15 @@ felfel superadmin
 
 ---
 
+## 🤝 مشارکت
+
+راهنمای مشارکت در [CONTRIBUTING.md](CONTRIBUTING.md) است. مشکلات امنیتی را در [SECURITY.md](SECURITY.md) گزارش کنید.
+
+---
+
 ## 📄 لایسنس
 
-این پروژه تحت لایسنس MIT منتشر شده است.
+این پروژه تحت لایسنس MIT منتشر شده است. فایل [LICENSE](LICENSE) را ببینید.
 
 </div>
 
@@ -316,7 +326,7 @@ felfel superadmin
 
 **FelFelChat** is a modern, secure, self-hosted real-time messaging application built with Next.js, Rust, and MongoDB. It features real-time chat, WebRTC voice calls, end-to-end encryption, multilingual support (Farsi/English), and a powerful admin panel.
 
-🔗 **Repository:** https://git.diastom.xyz/ZethRise/FelFelChat
+🔗 **Repository:** https://github.com/ZethRise/FelFelChat
 
 ---
 
@@ -350,7 +360,7 @@ felfel superadmin
 | Fonts | Vazirmatn (Persian) + Sora (Latin) |
 | Voice Calls | WebRTC + Google STUN + Open Relay TURN |
 | Monitoring | Sentry |
-| Language | TypeScript |
+| Language | Rust + TypeScript |
 
 ---
 
@@ -385,6 +395,8 @@ FelFelChat/
 ├── fonts/
 ├── docs/
 │   └── OPERATIONS.md
+├── CONTRIBUTING.md
+├── SECURITY.md
 ├── Cargo.toml
 ├── install.sh
 ├── Dockerfile
@@ -415,7 +427,7 @@ felfel
 ### Method 2: Install via curl
 
 ```bash
-curl -sL https://git.diastom.xyz/ZethRise/FelFelChat/-/raw/master/install.sh | bash
+curl -sL https://raw.githubusercontent.com/ZethRise/FelFelChat/master/install.sh | bash
 ```
 
 After installation, use the `felfel` command to manage your server. Run `felfel` to check for updates — if a new version is available, you'll be prompted to update automatically.
@@ -445,7 +457,7 @@ For production, put `JWT_SECRET` and `BACKUP_SIGNING_KEY` in a `.env` file next 
 ### 1. Clone the repository
 
 ```bash
-git clone https://git.diastom.xyz/ZethRise/FelFelChat.git
+git clone https://github.com/ZethRise/FelFelChat.git
 cd FelFelChat
 ```
 
@@ -628,8 +640,14 @@ You will be prompted for:
 
 ---
 
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Report security issues in [SECURITY.md](SECURITY.md).
+
+---
+
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License. See [LICENSE](LICENSE).
 
 </div>
