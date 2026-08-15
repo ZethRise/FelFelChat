@@ -1,0 +1,43 @@
+[package]
+name = "felfel-server"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+license = "MIT"
+description = "FelFelChat HTTP + Socket.IO backend"
+
+[[bin]]
+name = "felfel-server"
+path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.8", features = ["multipart", "macros"] }
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "trace", "set-header"] }
+socketioxide = { version = "0.18", features = ["extensions", "state", "tracing", "v4"] }
+mongodb = "3.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+jsonwebtoken = "9"
+bcrypt = "0.17"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+rand = "0.9"
+dotenvy = "0.15"
+tracing = "0.1"
+thiserror = "2"
+futures-util = "0.3"
+http = "1"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["client", "client-legacy", "http1", "tokio"] }
+bytes = "1"
+mime = "0.3"
+urlencoding = "2"
+form_urlencoded = "1"
+dashmap = "6"
+async-trait = "0.1"

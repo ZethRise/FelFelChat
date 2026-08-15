@@ -2,7 +2,7 @@
 
 # 💬 فل‌فل‌چت
 
-**فل‌فل‌چت** یک پیام‌رسان بلادرنگ مدرن و امن است که با Next.js، Socket.IO و Prisma/MongoDB ساخته شده. این پروژه برای استقرار روی سرور خودتان (self-hosted) طراحی شده و از ویژگی‌هایی مانند تماس صوتی، رمزنگاری، چندزبانگی و پنل مدیریت پیشرفته برخوردار است.
+**فل‌فل‌چت** یک پیام‌رسان بلادرنگ مدرن و امن است که با Next.js، Rust و MongoDB ساخته شده. این پروژه برای استقرار روی سرور خودتان (self-hosted) طراحی شده و از ویژگی‌هایی مانند تماس صوتی، رمزنگاری، چندزبانگی و پنل مدیریت پیشرفته برخوردار است.
 
 ---
 
@@ -29,9 +29,9 @@
 | بخش | تکنولوژی |
 | -------------- | -------------------------------- |
 | فریم‌ورک | Next.js 16 (App Router) |
-| بک‌اند بلادرنگ | Socket.IO 4 |
-| پایگاه داده | MongoDB (از طریق Prisma ORM) |
-| احراز هویت | JWT + bcryptjs |
+| بک‌اند | Rust (Axum + Socket.IO) |
+| پایگاه داده | MongoDB |
+| احراز هویت | JWT + bcrypt |
 | استایل | Tailwind CSS 4 + Vanilla CSS |
 | فونت | Vazirmatn (فارسی) + Sora (لاتین) |
 | تماس صوتی | WebRTC + Google STUN + Open Relay TURN |
@@ -58,52 +58,24 @@
 
 ```
 FelFelChat/
-├── src/
-│   ├── app/                  # صفحات و API Routes
-│   │   ├── page.tsx          # صفحه اصلی (چت)
-│   │   ├── login/            # صفحه ورود
-│   │   ├── signup/           # صفحه ثبت‌نام
-│   │   ├── profile/          # صفحه پروفایل
-│   │   ├── admin/            # پنل مدیریت
-│   │   └── api/              # REST API Routes
-│   ├── components/           # کامپوننت‌های React
-│   │   ├── ChatView.tsx      # رابط اصلی چت
-│   │   ├── Sidebar.tsx       # لیست چت‌ها (موبایل + دسکتاپ)
-│   │   ├── VoiceCall.tsx     # کامپوننت تماس صوتی
-│   │   ├── AppIcon.tsx       # آیکون‌های اپ
-│   │   ├── EmojiStickerPicker.tsx  # انتخاب‌گر ایموجی/استیکر
-│   │   ├── GroupMembersModal.tsx   # مدیریت اعضای گروه
-│   │   ├── ImagePreviewModal.tsx   # پیش‌نمایش تصویر
-│   │   ├── UserProfileModal.tsx    # پروفایل کاربر
-│   │   └── providers/        # کانتکست‌های React
-│   ├── lib/                  # ابزارها و سرویس‌ها
-│   │   ├── hushCrypto.ts     # رمزنگاری
-│   │   ├── i18n.ts           # چندزبانگی (FA/EN)
-│   │   ├── jwt.ts            # مدیریت توکن
-│   │   ├── prisma.ts         # اتصال پایگاه داده
-│   │   ├── routeAuth.ts      # احراز هویت روت‌ها
-│   │   ├── rateLimit.ts      # نرخ‌محدودی
-│   │   ├── auditLog.ts       # لاگ حسابرسی
-│   │   ├── backupIntegrity.ts # یکپارچگی پشتیبان
-│   │   ├── imageCompression.ts # فشرده‌سازی تصویر
-│   │   ├── monitoring.ts     # Sentry
-│   │   ├── logger.ts         # لاگر
-│   │   └── socket.ts         # Socket.IO Client
-│   └── assets/branding/      # لوگو و برندینگ
-├── prisma/
-│   ├── schema.prisma         # مدل‌های پایگاه داده
-│   ├── seed.ts               # داده‌های اولیه
-│   └── migrations/           # تاریخچه مایگریشن‌ها
-├── public/
-│   └── noise-suppress/       # فایل‌های WASM (اختیاری)
-├── server.mjs                # سرور Node.js سفارشی
+├── src/                      # بک‌اند Rust
+│   ├── main.rs
+│   ├── http/                 # REST API
+│   ├── realtime/             # Socket.IO
+│   ├── db/                   # MongoDB
+│   └── auth/
+├── app/                      # صفحات Next.js
+├── components/               # کامپوننت‌های React
+├── lib/                      # ابزارهای کلاینت (رمزنگاری، i18n، سوکت)
+├── assets/                   # لوگو و برندینگ
+├── fonts/
 ├── docs/
-│   └── OPERATIONS.md         # راهنمای عملیات و نگهداری
-├── install.sh                # اسکریپت نصب و مدیریت (لینوکس)
-├── Dockerfile                # ایمیج پروداکشن
-├── docker-compose.yml        # اپ + MongoDB replica set
-├── docker/                   # entrypoint و seed سوپرادمین
-└── .env.example              # نمونه متغیرهای محیطی
+│   └── OPERATIONS.md
+├── Cargo.toml
+├── install.sh
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
 ```
 
 ---
@@ -111,7 +83,8 @@ FelFelChat/
 ## ⚙️ پیش‌نیازها
 
 - **Node.js** نسخه ۲۰ به بالا
-- **MongoDB** نسخه ۸ به بالا + **Replica Set** فعال
+- **Rust** نسخه ۱.۹۴ به بالا (`rustc` / `cargo`)
+- **MongoDB** نسخه ۸ به بالا
 - **npm**
 
 ---
@@ -213,10 +186,10 @@ sudo systemctl restart mongod
 mongosh --eval "rs.initiate()"
 ```
 
-### ۵. اجرای Migrations
+### ۵. ساخت سوپرادمین (اختیاری)
 
 ```bash
-npm run db:migrate
+npm run db:seed
 ```
 
 ### ۶. اجرای برنامه
@@ -242,9 +215,7 @@ npm start
 | `npm run build` | ساخت نسخه پروداکشن |
 | `npm start` | اجرا در محیط پروداکشن |
 | `npm run lint` | بررسی کیفیت کد |
-| `npm run db:migrate` | اجرای مایگریشن‌های پایگاه داده |
-| `npm run db:seed` | بارگذاری داده‌های اولیه |
-| `npm run db:studio` | باز کردن Prisma Studio |
+| `npm run db:seed` | ساخت سوپرادمین در صورت نبود |
 
 ---
 
@@ -343,7 +314,7 @@ felfel superadmin
 
 # 💬 FelFelChat
 
-**FelFelChat** is a modern, secure, self-hosted real-time messaging application built with Next.js, Socket.IO, and Prisma/MongoDB. It features real-time chat, WebRTC voice calls, end-to-end encryption, multilingual support (Farsi/English), and a powerful admin panel.
+**FelFelChat** is a modern, secure, self-hosted real-time messaging application built with Next.js, Rust, and MongoDB. It features real-time chat, WebRTC voice calls, end-to-end encryption, multilingual support (Farsi/English), and a powerful admin panel.
 
 🔗 **Repository:** https://git.diastom.xyz/ZethRise/FelFelChat
 
@@ -372,9 +343,9 @@ felfel superadmin
 | Layer | Technology |
 | ----------- | ---------------------------------- |
 | Framework | Next.js 16 (App Router) |
-| Real-time | Socket.IO 4 |
-| Database | MongoDB via Prisma ORM |
-| Auth | JWT + bcryptjs |
+| Backend | Rust (Axum + Socket.IO) |
+| Database | MongoDB |
+| Auth | JWT + bcrypt |
 | Styling | Tailwind CSS 4 + Vanilla CSS |
 | Fonts | Vazirmatn (Persian) + Sora (Latin) |
 | Voice Calls | WebRTC + Google STUN + Open Relay TURN |
@@ -401,52 +372,24 @@ The mobile UI is modeled after Telegram:
 
 ```
 FelFelChat/
-├── src/
-│   ├── app/                  # Pages and API Routes
-│   │   ├── page.tsx          # Main chat page
-│   │   ├── login/            # Login page
-│   │   ├── signup/           # Sign-up page
-│   │   ├── profile/          # User profile page
-│   │   ├── admin/            # Admin panel
-│   │   └── api/              # REST API routes
-│   ├── components/           # React components
-│   │   ├── ChatView.tsx      # Main chat interface
-│   │   ├── Sidebar.tsx       # Chat list (mobile + desktop)
-│   │   ├── VoiceCall.tsx     # Voice call UI
-│   │   ├── AppIcon.tsx       # App icons
-│   │   ├── EmojiStickerPicker.tsx  # Emoji/sticker picker
-│   │   ├── GroupMembersModal.tsx   # Group member management
-│   │   ├── ImagePreviewModal.tsx   # Image preview
-│   │   ├── UserProfileModal.tsx    # User profile modal
-│   │   └── providers/        # React contexts
-│   ├── lib/                  # Utilities and services
-│   │   ├── hushCrypto.ts     # Encryption
-│   │   ├── i18n.ts           # Internationalization (FA/EN)
-│   │   ├── jwt.ts            # Token management
-│   │   ├── prisma.ts         # Database client
-│   │   ├── routeAuth.ts      # Route authentication
-│   │   ├── rateLimit.ts      # Rate limiting
-│   │   ├── auditLog.ts       # Audit logging
-│   │   ├── backupIntegrity.ts # Backup verification
-│   │   ├── imageCompression.ts # Client-side image compression
-│   │   ├── monitoring.ts     # Sentry init
-│   │   ├── logger.ts         # Structured logger
-│   │   └── socket.ts         # Socket.IO client helper
-│   └── assets/branding/      # Logo and branding assets
-├── prisma/
-│   ├── schema.prisma         # Database models
-│   ├── seed.ts               # Seed data
-│   └── migrations/           # Migration history
-├── public/
-│   └── noise-suppress/       # WASM files (optional)
-├── server.mjs                # Custom Node.js server (Next.js + Socket.IO)
+├── src/                      # Rust backend
+│   ├── main.rs
+│   ├── http/                 # REST API
+│   ├── realtime/             # Socket.IO
+│   ├── db/                   # MongoDB
+│   └── auth/
+├── app/                      # Next.js pages
+├── components/               # React components
+├── lib/                      # Client helpers (crypto, i18n, socket)
+├── assets/                   # Logo and branding
+├── fonts/
 ├── docs/
-│   └── OPERATIONS.md         # Operations runbook
-├── install.sh                # Linux one-command installer & manager
-├── Dockerfile                # Production image
-├── docker-compose.yml        # App + MongoDB replica set
-├── docker/                   # Entrypoint and superadmin seed
-└── .env.example              # Environment variable template
+│   └── OPERATIONS.md
+├── Cargo.toml
+├── install.sh
+├── Dockerfile
+├── docker-compose.yml
+└── .env.example
 ```
 
 ---
@@ -454,7 +397,8 @@ FelFelChat/
 ## ⚙️ Prerequisites
 
 - **Node.js** v20 or later
-- **MongoDB** v8 or later with a **Replica Set** configured
+- **Rust** 1.94 or later (`rustc` / `cargo`)
+- **MongoDB** v8 or later
 - **npm**
 
 ---
@@ -544,7 +488,7 @@ NEXT_PUBLIC_WEBRTC_TURN_CREDENTIAL=
 
 ### 4. Set up MongoDB with Replica Set
 
-MongoDB Replica Set is required for Prisma change streams. Add the following to `/etc/mongod.conf`:
+A MongoDB replica set is optional. If you still use one, add this to `/etc/mongod.conf`:
 
 ```yaml
 replication:
@@ -558,10 +502,10 @@ sudo systemctl restart mongod
 mongosh --eval "rs.initiate()"
 ```
 
-### 5. Run database migrations
+### 5. Seed superadmin (optional)
 
 ```bash
-npm run db:migrate
+npm run db:seed
 ```
 
 ### 6. Start the app
@@ -587,9 +531,7 @@ The app is available at `http://localhost:3000`.
 | `npm run build` | Build for production |
 | `npm start` | Start in production mode |
 | `npm run lint` | Lint the codebase |
-| `npm run db:migrate` | Apply database migrations |
-| `npm run db:seed` | Seed initial data |
-| `npm run db:studio` | Open Prisma Studio |
+| `npm run db:seed` | Create superadmin if missing |
 
 ---
 

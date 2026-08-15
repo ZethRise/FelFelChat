@@ -35,8 +35,8 @@
   - Rollout status
 
 ## Deployment Checklist
-- `npm run lint` passes.
-- `npm run build` passes.
+- `cargo build --release` passes.
+- `npx next build` passes.
 - `/api/health` is `ok`.
 - `/api/ready` is `ready`.
 - Backup signature verification tested with one create+restore dry run.

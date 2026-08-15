@@ -8,6 +8,8 @@ export UPLOAD_DIR="${UPLOAD_DIR:-/data/uploads}"
 export BACKUP_DIR="${BACKUP_DIR:-/data/backups}"
 export AUDIT_LOG_DIR="${AUDIT_LOG_DIR:-/data/logs}"
 export DATABASE_URL="${DATABASE_URL:-mongodb://mongo:27017/felfelchat?replicaSet=rs0}"
+export SERVE_FRONTEND="${SERVE_FRONTEND:-true}"
+export NEXT_INTERNAL_PORT="${NEXT_INTERNAL_PORT:-3001}"
 
 mkdir -p "$UPLOAD_DIR" "$BACKUP_DIR" "$AUDIT_LOG_DIR"
 
@@ -26,14 +28,14 @@ fi
 echo "[felfel] waiting for MongoDB"
 ready=0
 for _ in $(seq 1 60); do
-  if node -e '
-    const net = require("net");
-    const url = new URL(process.env.DATABASE_URL.replace(/^mongodb(\+srv)?:\/\//, "http://"));
-    const host = url.hostname;
-    const port = Number(url.port || 27017);
-    const s = net.connect(port, host, () => { s.end(); process.exit(0); });
-    s.on("error", () => process.exit(1));
-  ' >/dev/null 2>&1; then
+  hostport="${DATABASE_URL#mongodb://}"
+  hostport="${hostport#mongodb+srv://}"
+  hostport="${hostport%%/*}"
+  hostport="${hostport%%\?*}"
+  host="${hostport%%:*}"
+  port="${hostport##*:}"
+  [[ "$port" == "$host" ]] && port=27017
+  if (echo >/dev/tcp/"$host"/"$port") >/dev/null 2>&1; then
     ready=1
     break
   fi
@@ -44,12 +46,8 @@ if [[ "$ready" != "1" ]]; then
   exit 1
 fi
 
-cd /app
-echo "[felfel] syncing Prisma schema"
-npx prisma db push --accept-data-loss --skip-generate
-
 echo "[felfel] seeding superadmin if missing"
-node /app/docker/seed-admin.mjs
+/usr/local/bin/felfel-server seed-superadmin
 
 echo "[felfel] starting app on :${PORT}"
-exec node server.mjs
+exec /usr/local/bin/felfel-server

@@ -1081,7 +1081,7 @@ pid_looks_like_app() {
   if [[ -n "$cwd" && "$cwd" == "${APP_DIR}"* ]]; then
     return 0
   fi
-  if [[ "$cmdline" == *"${APP_DIR}"* ]] || [[ "$cmdline" == *"server.mjs"* ]]; then
+  if [[ "$cmdline" == *"${APP_DIR}"* ]] || [[ "$cmdline" == *"felfel-server"* ]]; then
     return 0
   fi
   return 1
@@ -1371,11 +1371,13 @@ run_migrations() {
   upsert_env "DATABASE_URL" "$(resolve_database_url)"
   cleanup_legacy_sqlite_artifacts
   ensure_runtime_permissions
-  log "Syncing Prisma schema..."
-  if command -v npx >/dev/null 2>&1; then
-    (cd "$APP_DIR" && npx prisma db push --accept-data-loss && npx prisma generate)
+  log "Seeding superadmin if missing..."
+  if [[ -x "${APP_DIR}/target/release/felfel-server" ]]; then
+    (cd "$APP_DIR" && "${APP_DIR}/target/release/felfel-server" seed-superadmin)
+  elif command -v cargo >/dev/null 2>&1; then
+    (cd "$APP_DIR" && cargo run --release -- seed-superadmin)
   else
-    (cd "$APP_DIR" && npm exec -- prisma db push --accept-data-loss && npm exec -- prisma generate)
+    warn "Rust toolchain not found; skip seed. Install rustc/cargo and rerun."
   fi
   ensure_runtime_permissions
   ok "Database sync complete"
@@ -1385,7 +1387,13 @@ build_app() {
   ensure_node_toolchain
   ensure_swap
   log "Building application..."
-  (cd "$APP_DIR" && NODE_OPTIONS="--max-old-space-size=768" npm run build)
+  (cd "$APP_DIR" && NODE_OPTIONS="--max-old-space-size=768" npx next build)
+  if command -v cargo >/dev/null 2>&1; then
+    (cd "$APP_DIR" && cargo build --release)
+  else
+    err "cargo not found. Install Rust to build the backend."
+    return 1
+  fi
   ok "Build complete"
 }
 
@@ -1455,7 +1463,7 @@ start_server() {
   fi
 
   mkdir -p "$LOG_DIR"
-  (cd "$APP_DIR" && nohup env NODE_ENV=production node server.mjs >>"$OUT_LOG" 2>>"$ERR_LOG" & echo $! > "$PID_FILE")
+  (cd "$APP_DIR" && nohup env NODE_ENV=production SERVE_FRONTEND=true "${APP_DIR}/target/release/felfel-server" >>"$OUT_LOG" 2>>"$ERR_LOG" & echo $! > "$PID_FILE")
   sleep 1
   if is_running_fallback; then
     ok "Server started (PID $(cat "$PID_FILE"))"
@@ -1487,7 +1495,7 @@ stop_server() {
   # (caused by multiple nohup starts without proper stop)
   local orphan_pids
   mapfile -t orphan_pids < <(
-    pgrep -f "node server\.mjs" 2>/dev/null | grep -v "^$$" || true
+    pgrep -f "felfel-server" 2>/dev/null | grep -v "^$$" || true
     pgrep -f "npm run start" 2>/dev/null | grep -v "^$$" || true
   )
   if [[ ${#orphan_pids[@]} -gt 0 ]]; then
@@ -1948,7 +1956,7 @@ uninstall_app() {
 
   local orphan_pids
   mapfile -t orphan_pids < <(
-    pgrep -f "node server\.mjs" 2>/dev/null || true
+    pgrep -f "felfel-server" 2>/dev/null || true
     pgrep -f "npm run start" 2>/dev/null | grep -v "^$$" || true
   )
   for p in "${orphan_pids[@]}"; do
@@ -2556,7 +2564,7 @@ ensure_app_dir_for_tui() {
   if [[ -z "${APP_DIR:-}" ]]; then
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    if [[ -f "${script_dir}/package.json" && -f "${script_dir}/server.mjs" ]]; then
+    if [[ -f "${script_dir}/package.json" && -f "${script_dir}/Cargo.toml" && -f "${script_dir}/src/main.rs" ]]; then
       APP_DIR="$script_dir"
       set_paths
       return

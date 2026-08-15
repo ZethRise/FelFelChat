@@ -53,6 +53,9 @@ public/uploads/
 # backups
 backups/
 
+# rust
+/target
+
 # Agent files
 AGENTS.md
 scripts/convert_logo_assets.py
